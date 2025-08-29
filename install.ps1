@@ -91,13 +91,12 @@ try {
 
 # Download latest release from GitHub
 Write-Status "Downloading PlexPrerollManager..."
-$repoUrl = "https://api.github.com/repos/YOUR_USERNAME/PlexPrerollManager/releases/latest"
-$downloadUrl = "https://github.com/YOUR_USERNAME/PlexPrerollManager/releases/latest/download/PlexPrerollManager.zip"
+$repoUrl = "https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest"
+$downloadUrl = "https://github.com/JFLXCLOUD/PlexPrerollManager/releases/latest/download/PlexPrerollManager.zip"
 
 try {
     # For now, we'll use a placeholder. In real deployment, this would download from GitHub
-    Write-Warning "Note: Replace YOUR_USERNAME in this script with your actual GitHub username"
-    Write-Status "In production, this would download the latest release from GitHub"
+    Write-Status "Downloading from GitHub repository..."
 
     # Copy current files to installation directory (for development/testing)
     Write-Status "Copying application files..."

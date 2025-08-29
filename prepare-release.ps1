@@ -5,22 +5,18 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$Version,
 
-    [string]$ReleaseNotes = "",
-
     [switch]$SkipBuild,
-
     [switch]$SkipTests
 )
 
-Write-Host "🚀 PlexPrerollManager Release Preparation" -ForegroundColor Cyan
+Write-Host "PlexPrerollManager Release Preparation v$Version" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "Version: $Version" -ForegroundColor Yellow
 
 # Function to write colored output
-function Write-Status { param($Message) Write-Host "ℹ️  $Message" -ForegroundColor Blue }
-function Write-Success { param($Message) Write-Host "✅ $Message" -ForegroundColor Green }
-function Write-Warning { param($Message) Write-Host "⚠️  $Message" -ForegroundColor Yellow }
-function Write-Error { param($Message) Write-Host "❌ $Message" -ForegroundColor Red }
+function Write-Status { param($Message) Write-Host "INFO: $Message" -ForegroundColor Blue }
+function Write-Success { param($Message) Write-Host "SUCCESS: $Message" -ForegroundColor Green }
+function Write-Warning { param($Message) Write-Host "WARNING: $Message" -ForegroundColor Yellow }
+function Write-Error { param($Message) Write-Host "ERROR: $Message" -ForegroundColor Red }
 
 # Clean previous builds
 Write-Status "Cleaning previous builds..."
@@ -34,13 +30,8 @@ Write-Status "Updating version in project file..."
 $csprojPath = "PlexPrerollManager.csproj"
 $csprojContent = Get-Content $csprojPath -Raw
 
-# Update version if it exists, otherwise add it
-if ($csprojContent -match '<Version>.*?</Version>') {
-    $csprojContent = $csprojContent -replace '<Version>.*?</Version>', "<Version>$Version</Version>"
-} else {
-    $csprojContent = $csprojContent -replace '<PropertyGroup>', "<PropertyGroup>`n    <Version>$Version</Version>"
-}
-
+# Simple version update - just replace existing version tag
+$csprojContent = $csprojContent -replace '<Version>.*?</Version>', "<Version>$Version</Version>"
 $csprojContent | Set-Content $csprojPath -Encoding UTF8
 Write-Success "Version updated to $Version"
 
@@ -68,11 +59,30 @@ if (-not $SkipTests) {
 
 # Publish self-contained executable
 Write-Status "Creating self-contained executable..."
-& dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -o "release"
+if (Test-Path "release") { Remove-Item "release" -Recurse -Force }
+
+# First try with single file, if that fails, try without
+try {
+    & dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -o "release" 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Single-file publish failed, trying multi-file publish..."
+        & dotnet publish -c Release -r win-x64 --self-contained -o "release"
+    }
+} catch {
+    Write-Warning "Advanced publish failed, trying basic publish..."
+    & dotnet publish -c Release -o "release"
+}
+
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Publish failed!"
     exit 1
 }
+
+if (-not (Test-Path "release")) {
+    Write-Error "Release directory was not created!"
+    exit 1
+}
+
 Write-Success "Self-contained executable created"
 
 # Create release archive
@@ -84,69 +94,66 @@ if (Test-Path $releaseDir) { Remove-Item $releaseDir -Recurse -Force }
 New-Item -ItemType Directory -Path $releaseDir | Out-Null
 
 # Copy files to release directory
-Copy-Item "release\*" $releaseDir -Recurse
-Copy-Item "appsettings.json" $releaseDir
-Copy-Item "README.md" $releaseDir
-Copy-Item "install.ps1" $releaseDir
-Copy-Item "install-simple.bat" $releaseDir
-Copy-Item "install.bat" $releaseDir
-Copy-Item "install-preroll-manager.ps1" $releaseDir
+Write-Status "Copying files to release directory..."
+Copy-Item "release\*" $releaseDir -Recurse -ErrorAction SilentlyContinue
 
-# Create ZIP archive
-Compress-Archive -Path $releaseDir -DestinationPath $archiveName -Force
-Write-Success "Release archive created: $archiveName"
+# Copy additional files if they exist
+$filesToCopy = @(
+    "appsettings.json",
+    "README.md",
+    "install.ps1",
+    "install-simple.bat",
+    "install.bat",
+    "install-preroll-manager.ps1"
+)
 
-# Generate release notes if not provided
-if (-not $ReleaseNotes) {
-    Write-Status "Generating release notes..."
-    $ReleaseNotes = @"
-# PlexPrerollManager v$Version
-
-## What's New
-
-### 🎬 Enhanced Upload Features
-- **Bulk Upload**: Upload multiple videos at once with progress tracking
-- **Real-time Progress Bars**: Visual progress indicators for uploads
-- **Improved Error Handling**: Individual file failures don't stop bulk uploads
-
-### 🔧 Technical Improvements
-- **Better Platform Compatibility**: Fixed Windows-specific compilation warnings
-- **Enhanced User Interface**: Modern, responsive design improvements
-- **Improved Performance**: Optimized file handling and processing
-
-## Installation
-
-### Quick Install (One-Liner)
-```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/YOUR_USERNAME/PlexPrerollManager/main/install.ps1'))
-```
-
-### Manual Installation
-1. Download and extract the release archive
-2. Run `install.bat` or `install.ps1` as Administrator
-3. Open http://localhost:8089 in your browser
-
-## Features
-- ✅ Bulk video upload with progress tracking
-- ✅ Advanced scheduling system
-- ✅ Video thumbnail generation
-- ✅ Windows service integration
-- ✅ Modern web interface
-- ✅ Real-time status monitoring
-
-## System Requirements
-- Windows 10/11
-- .NET 9.0 or later
-- FFmpeg (automatically installed)
-
----
-**Full documentation available at: https://github.com/YOUR_USERNAME/PlexPrerollManager**
-"@
+foreach ($file in $filesToCopy) {
+    if (Test-Path $file) {
+        Copy-Item $file $releaseDir -ErrorAction SilentlyContinue
+    } else {
+        Write-Warning "File not found: $file"
+    }
 }
 
-# Save release notes
-$ReleaseNotes | Out-File -FilePath "RELEASE_NOTES.md" -Encoding UTF8
-Write-Success "Release notes generated"
+# Create ZIP archive
+Write-Status "Creating ZIP archive..."
+try {
+    if (Get-Command Compress-Archive -ErrorAction SilentlyContinue) {
+        Compress-Archive -Path $releaseDir -DestinationPath $archiveName -Force
+    } else {
+        Write-Warning "Compress-Archive not available, using alternative method..."
+        # Fallback for older PowerShell versions
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($releaseDir, $archiveName)
+    }
+    Write-Success "Release archive created: $archiveName"
+} catch {
+    Write-Error "Failed to create ZIP archive: $_"
+    exit 1
+}
+
+# Create simple release notes
+Write-Status "Creating release notes..."
+$releaseNotes = @"
+PlexPrerollManager v$Version Release Notes
+
+NEW FEATURES:
+- Bulk upload with progress tracking
+- Real-time progress bars for uploads
+- Enhanced error handling
+- Improved platform compatibility
+
+INSTALLATION:
+1. Download PlexPrerollManager-v$Version.zip
+2. Extract to a folder
+3. Run install.bat as Administrator
+4. Open http://localhost:8089
+
+For detailed documentation, visit the GitHub repository.
+"@
+
+$releaseNotes | Out-File -FilePath "RELEASE_NOTES.md" -Encoding UTF8
+Write-Success "Release notes created"
 
 # Create checksums
 Write-Status "Generating checksums..."
