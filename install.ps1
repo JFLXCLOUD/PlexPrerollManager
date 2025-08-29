@@ -1,0 +1,240 @@
+# PlexPrerollManager One-Click Installer
+# Run this script to automatically install PlexPrerollManager on Windows
+
+param(
+    [string]$InstallPath = "$env:ProgramFiles\PlexPrerollManager",
+    [string]$DataPath = "$env:ProgramData\PlexPrerollManager",
+    [switch]$SkipFFmpeg,
+    [switch]$Force
+)
+
+#Requires -Version 5.1
+#Requires -RunAsAdministrator
+
+Write-Host "🚀 PlexPrerollManager One-Click Installer" -ForegroundColor Cyan
+Write-Host "==============================================" -ForegroundColor Cyan
+
+# Check if running as administrator
+$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "❌ This script must be run as Administrator. Please restart PowerShell as Administrator and try again." -ForegroundColor Red
+    exit 1
+}
+
+# Function to write colored output
+function Write-Status { param($Message) Write-Host "ℹ️  $Message" -ForegroundColor Blue }
+function Write-Success { param($Message) Write-Host "✅ $Message" -ForegroundColor Green }
+function Write-Warning { param($Message) Write-Host "⚠️  $Message" -ForegroundColor Yellow }
+function Write-Error { param($Message) Write-Host "❌ $Message" -ForegroundColor Red }
+
+# Check .NET 9.0
+Write-Status "Checking .NET 9.0 installation..."
+try {
+    $dotnetVersion = & dotnet --version 2>$null
+    if ($dotnetVersion -and $dotnetVersion -ge "9.0") {
+        Write-Success ".NET $dotnetVersion found"
+    } else {
+        Write-Error ".NET 9.0 or later is required. Please install from: https://dotnet.microsoft.com/download"
+        exit 1
+    }
+} catch {
+    Write-Error ".NET is not installed. Please install .NET 9.0 from: https://dotnet.microsoft.com/download"
+    exit 1
+}
+
+# Install FFmpeg if not skipped
+if (-not $SkipFFmpeg) {
+    Write-Status "Checking FFmpeg installation..."
+    try {
+        $ffmpegVersion = & ffmpeg -version 2>$null | Select-Object -First 1
+        if ($ffmpegVersion) {
+            Write-Success "FFmpeg found: $ffmpegVersion"
+        } else {
+            throw "FFmpeg not found"
+        }
+    } catch {
+        Write-Warning "FFmpeg not found. Installing via Chocolatey..."
+        try {
+            # Check if Chocolatey is installed
+            $chocoVersion = & choco --version 2>$null
+            if (-not $chocoVersion) {
+                Write-Status "Installing Chocolatey..."
+                Set-ExecutionPolicy Bypass -Scope Process -Force
+                [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+                iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+            }
+
+            Write-Status "Installing FFmpeg via Chocolatey..."
+            & choco install ffmpeg -y
+            Write-Success "FFmpeg installed successfully"
+        } catch {
+            Write-Warning "Could not install FFmpeg automatically. Please install manually from: https://ffmpeg.org/download.html"
+            Write-Warning "Add FFmpeg to your PATH after installation"
+        }
+    }
+}
+
+# Create installation directories
+Write-Status "Creating installation directories..."
+try {
+    if (-not (Test-Path $InstallPath)) {
+        New-Item -ItemType Directory -Path $InstallPath -Force | Out-Null
+    }
+    if (-not (Test-Path $DataPath)) {
+        New-Item -ItemType Directory -Path $DataPath -Force | Out-Null
+    }
+    Write-Success "Directories created successfully"
+} catch {
+    Write-Error "Failed to create directories: $_"
+    exit 1
+}
+
+# Download latest release from GitHub
+Write-Status "Downloading PlexPrerollManager..."
+$repoUrl = "https://api.github.com/repos/YOUR_USERNAME/PlexPrerollManager/releases/latest"
+$downloadUrl = "https://github.com/YOUR_USERNAME/PlexPrerollManager/releases/latest/download/PlexPrerollManager.zip"
+
+try {
+    # For now, we'll use a placeholder. In real deployment, this would download from GitHub
+    Write-Warning "Note: Replace YOUR_USERNAME in this script with your actual GitHub username"
+    Write-Status "In production, this would download the latest release from GitHub"
+
+    # Copy current files to installation directory (for development/testing)
+    Write-Status "Copying application files..."
+    $currentPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+    Copy-Item "$currentPath\*" $InstallPath -Recurse -Force -Exclude @("*.git*", "*node_modules*")
+
+    Write-Success "Application files copied successfully"
+} catch {
+    Write-Error "Failed to download/copy application files: $_"
+    exit 1
+}
+
+# Build the application
+Write-Status "Building PlexPrerollManager..."
+try {
+    Push-Location $InstallPath
+    & dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false
+    Pop-Location
+    Write-Success "Application built successfully"
+} catch {
+    Write-Error "Failed to build application: $_"
+    exit 1
+}
+
+# Create appsettings.json if it doesn't exist
+$appsettingsPath = Join-Path $DataPath "appsettings.json"
+if (-not (Test-Path $appsettingsPath) -or $Force) {
+    Write-Status "Creating default configuration..."
+    $defaultConfig = @"
+{
+  "Plex": {
+    "Url": "http://localhost:32400",
+    "Token": ""
+  },
+  "PrerollManager": {
+    "PrerollsPath": "$DataPath\\Prerolls",
+    "ConfigPath": "$DataPath\\config.json"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  }
+}
+"@
+    $defaultConfig | Out-File -FilePath $appsettingsPath -Encoding UTF8
+    Write-Success "Default configuration created at: $appsettingsPath"
+}
+
+# Install Windows service
+Write-Status "Installing Windows service..."
+try {
+    $exePath = Join-Path $InstallPath "bin\Release\net9.0\win-x64\publish\PlexPrerollManager.exe"
+
+    if (Test-Path $exePath) {
+        # Stop existing service if running
+        $existingService = Get-Service -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
+        if ($existingService) {
+            Stop-Service -Name "PlexPrerollManager" -Force -ErrorAction SilentlyContinue
+            & sc.exe delete PlexPrerollManager
+            Start-Sleep -Seconds 2
+        }
+
+        # Create new service
+        $createService = & sc.exe create PlexPrerollManager binPath= "$exePath --contentRoot $InstallPath" start= auto
+        if ($LASTEXITCODE -eq 0) {
+            Write-Success "Windows service created successfully"
+        } else {
+            throw "Failed to create service"
+        }
+
+        # Start the service
+        Start-Service -Name "PlexPrerollManager"
+        Write-Success "Windows service started successfully"
+    } else {
+        Write-Error "Could not find executable at: $exePath"
+        exit 1
+    }
+} catch {
+    Write-Error "Failed to install Windows service: $_"
+    Write-Warning "You can still run the application manually: $exePath"
+}
+
+# Create desktop shortcut
+Write-Status "Creating desktop shortcut..."
+try {
+    $WshShell = New-Object -comObject WScript.Shell
+    $Shortcut = $WshShell.CreateShortcut("$([Environment]::GetFolderPath('Desktop'))\PlexPrerollManager.lnk")
+    $Shortcut.TargetPath = "http://localhost:8089"
+    $Shortcut.IconLocation = "shell32.dll,13"
+    $Shortcut.Description = "Open PlexPrerollManager Web Interface"
+    $Shortcut.Save()
+    Write-Success "Desktop shortcut created"
+} catch {
+    Write-Warning "Could not create desktop shortcut: $_"
+}
+
+# Final instructions
+Write-Host ""
+Write-Host "🎉 Installation Complete!" -ForegroundColor Green
+Write-Host "==========================" -ForegroundColor Green
+Write-Host ""
+Write-Host "📱 Web Interface: http://localhost:8089" -ForegroundColor Cyan
+Write-Host "📁 Install Path: $InstallPath" -ForegroundColor Cyan
+Write-Host "📊 Data Path: $DataPath" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "🚀 Getting Started:" -ForegroundColor Yellow
+Write-Host "1. Open http://localhost:8089 in your browser"
+Write-Host "2. Configure your Plex server URL and token in the settings"
+Write-Host "3. Upload your first preroll videos!"
+Write-Host ""
+Write-Host "📚 Need Help?" -ForegroundColor Yellow
+Write-Host "• Check the README.md for detailed instructions"
+Write-Host "• View logs in Windows Event Viewer"
+Write-Host "• Visit the GitHub repository for updates"
+Write-Host ""
+Write-Host "💡 Pro Tips:" -ForegroundColor Magenta
+Write-Host "• Use Bulk Upload to add multiple videos at once"
+Write-Host "• Set up schedules for automatic preroll switching"
+Write-Host "• Check the scheduling dashboard for advanced automation"
+Write-Host ""
+
+# Wait a moment for service to fully start
+Write-Status "Waiting for service to start..."
+Start-Sleep -Seconds 3
+
+# Test the service
+try {
+    $response = Invoke-WebRequest -Uri "http://localhost:8089" -TimeoutSec 10 -ErrorAction Stop
+    if ($response.StatusCode -eq 200) {
+        Write-Success "Service is running and responding correctly!"
+    }
+} catch {
+    Write-Warning "Service may still be starting up. Please wait a moment and try accessing http://localhost:8089"
+}
+
+Write-Host ""
+Write-Host "Thank you for installing PlexPrerollManager! 🎬✨" -ForegroundColor Cyan
