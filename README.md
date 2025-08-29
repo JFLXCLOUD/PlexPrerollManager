@@ -1,6 +1,6 @@
 # PlexPrerollManager
 
-A comprehensive web-based management system for Plex cinema prerolls with advanced features like scheduling, video thumbnails, and metadata extraction.
+A comprehensive web-based management system for Plex cinema prerolls with advanced features like scheduling, bulk imports, and metadata extraction.
 
 ## Features
 
@@ -82,7 +82,7 @@ sudo port install ffmpeg
 ### Windows PowerShell (Recommended)
 Run this one-liner in an elevated PowerShell terminal:
 ```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/YOUR_USERNAME/PlexPrerollManager/main/install.ps1'))
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1'))
 ```
 
 This will:
@@ -192,7 +192,7 @@ Thumbnails are stored in: `%ProgramData%\PlexPrerollManager\Prerolls\.thumbnails
 ### Building from Source
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/PlexPrerollManager.git
+git clone https://github.com/JFLXCLOUD/PlexPrerollManager.git
 cd PlexPrerollManager
 
 # Build the application
@@ -255,12 +255,12 @@ This project is open source. Feel free to use, modify, and distribute.
    git add .
    git commit -m "Initial commit: PlexPrerollManager with bulk upload"
    git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/PlexPrerollManager.git
+   git remote add origin https://github.com/JFLXCLOUD/PlexPrerollManager.git
    git push -u origin main
    ```
 
 3. **Update the installation scripts**:
-   - Replace `YOUR_USERNAME` in `install.ps1` and `README.md` with your actual GitHub username
+   - Replace `JFLXCLOUD` in `install.ps1` and `README.md` with your actual GitHub username
    - Update repository URLs in the scripts
 
 ### Creating Releases
@@ -283,7 +283,7 @@ For issues, questions, or feature requests:
 1. Check the troubleshooting section
 2. Review Windows Event Logs
 3. Create an issue with detailed information
-4. Check the [GitHub Discussions](https://github.com/YOUR_USERNAME/PlexPrerollManager/discussions) for community help
+4. Check the [GitHub Discussions](https://github.com/JFLXCLOUD/PlexPrerollManager/discussions) for community help
 
 ## Contributing
 
