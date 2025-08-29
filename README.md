@@ -56,26 +56,6 @@ A comprehensive web-based management system for Plex cinema prerolls with advanc
 choco install ffmpeg
 ```
 
-#### Linux
-```bash
-# Ubuntu/Debian
-sudo apt update && sudo apt install ffmpeg
-
-# CentOS/RHEL
-sudo yum install ffmpeg
-
-# Arch Linux
-sudo pacman -S ffmpeg
-```
-
-#### macOS
-```bash
-# Using Homebrew
-brew install ffmpeg
-
-# Or using MacPorts
-sudo port install ffmpeg
-```
 
 ## Quick Installation (One-Liner)
 
