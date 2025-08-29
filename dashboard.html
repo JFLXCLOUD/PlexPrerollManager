@@ -443,6 +443,106 @@
             margin-bottom: 20px;
             letter-spacing: -0.01em;
         }
+
+        /* Backup/Restore Styles */
+        .backup-section {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .backup-section h2 {
+            color: #f1f5f9;
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: -0.01em;
+        }
+        .backup-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .backup-list {
+            margin-top: 20px;
+        }
+        .backup-item {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .backup-info h4 {
+            color: #f1f5f9;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .backup-info small {
+            color: #94a3b8;
+            font-size: 0.85em;
+        }
+        .backup-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Update Notification Styles */
+        .update-notification {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: none;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 100;
+        }
+        .update-notification h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        .update-notification p {
+            margin: 0 0 15px 0;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .update-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .update-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .update-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        .update-dismiss {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .update-dismiss:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
         .schedules-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -543,6 +643,16 @@
         <div class='header'>
             <h1>Plex Preroll Manager</h1>
             <p>Manage your Plex cinema prerolls with ease</p>
+        </div>
+
+        <!-- Update Notification (moved to top) -->
+        <div class='update-notification' id='updateNotification'>
+            <h3>🔄 Update Available!</h3>
+            <p id='updateMessage'>A new version of PlexPrerollManager is available.</p>
+            <div class='update-actions'>
+                <button class='update-btn' id='updateDownloadBtn'>Download Update</button>
+                <button class='update-btn update-dismiss' id='updateDismissBtn'>Dismiss</button>
+            </div>
         </div>
 
         <div class='status-grid'>
@@ -692,6 +802,18 @@
             <h2>📋 Active Schedules</h2>
             <div class='schedules-grid' id='schedulesGrid'>
                 <div class='loading'>Loading schedules...</div>
+            </div>
+        </div>
+
+        <!-- Backup/Restore Section -->
+        <div class='backup-section'>
+            <h2>💾 Backup & Restore</h2>
+            <div class='backup-actions'>
+                <button class='btn' id='createBackupBtn'>Create Backup</button>
+                <button class='btn btn-secondary' id='refreshBackupsBtn'>Refresh List</button>
+            </div>
+            <div class='backup-list' id='backupList'>
+                <div class='loading'>Loading backups...</div>
             </div>
         </div>
     </div>
@@ -1305,11 +1427,190 @@
             }
         }
 
+        // ===== Backup/Restore Functions =====
+
+        async function createBackup() {
+            try {
+                const response = await fetch('/api/backup', {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.Success) {
+                    showSuccess(`Backup created successfully: ${result.FilePath}`);
+                    loadBackups();
+                } else {
+                    showError(result.Error || 'Failed to create backup');
+                }
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                showError('Failed to create backup');
+            }
+        }
+
+        async function loadBackups() {
+            try {
+                const response = await fetch('/api/backups');
+                const backups = await response.json();
+
+                const backupList = document.getElementById('backupList');
+
+                if (backups.length === 0) {
+                    backupList.innerHTML = '<p>No backups found. Create your first backup!</p>';
+                    return;
+                }
+
+                backupList.innerHTML = backups.map(backup => {
+                    const timestamp = new Date(backup.Timestamp);
+                    const fileSizeMB = (backup.FileSize / 1024 / 1024).toFixed(2);
+
+                    return `<div class='backup-item'>
+                        <div class='backup-info'>
+                            <h4>Backup ${timestamp.toLocaleString()}</h4>
+                            <small>
+                                Version: ${backup.Version} |
+                                Categories: ${backup.CategoryCount} |
+                                Videos: ${backup.TotalVideos} |
+                                Size: ${fileSizeMB} MB
+                            </small>
+                        </div>
+                        <div class='backup-actions'>
+                            <button class='btn btn-secondary' onclick='restoreBackup("${backup.FilePath}")'>Restore</button>
+                            <button class='btn btn-danger' onclick='deleteBackup("${backup.FilePath}")'>Delete</button>
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading backups:', error);
+                document.getElementById('backupList').innerHTML = '<div class="error">Failed to load backups</div>';
+            }
+        }
+
+        async function restoreBackup(backupPath) {
+            const fileName = backupPath.split('\\').pop() || backupPath.split('/').pop();
+            if (!confirm(`Are you sure you want to restore from backup "${fileName}"? This will replace your current configuration.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/backup/restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ backupPath })
+                });
+
+                const result = await response.json();
+
+                if (result.Success) {
+                    showSuccess(result.Message || 'Backup restored successfully!');
+                    // Refresh all data
+                    loadStatus();
+                    loadCategories();
+                    loadSchedules();
+                    loadBackups();
+                } else {
+                    showError(result.Error || 'Failed to restore backup');
+                }
+            } catch (error) {
+                console.error('Error restoring backup:', error);
+                showError('Failed to restore backup');
+            }
+        }
+
+        async function deleteBackup(backupPath) {
+            const fileName = backupPath.split('\\').pop() || backupPath.split('/').pop();
+            if (!confirm(`Are you sure you want to delete backup "${fileName}"?`)) {
+                return;
+            }
+
+            try {
+                // For now, we'll just show a message since we don't have a delete API endpoint
+                // In a real implementation, you'd add a DELETE /api/backups/{filename} endpoint
+                showSuccess('Backup deletion not implemented yet. Please delete manually from the backups folder.');
+                loadBackups();
+            } catch (error) {
+                console.error('Error deleting backup:', error);
+                showError('Failed to delete backup');
+            }
+        }
+
+        // ===== Update Notification Functions =====
+
+        async function checkForUpdates() {
+            try {
+                const response = await fetch('/api/updates/check');
+                const updateInfo = await response.json();
+
+                if (updateInfo.IsUpdateAvailable) {
+                    showUpdateNotification(updateInfo);
+                }
+            } catch (error) {
+                console.error('Error checking for updates:', error);
+                // Don't show error for update checks - it's not critical
+            }
+        }
+
+        function showUpdateNotification(updateInfo) {
+            const notification = document.getElementById('updateNotification');
+            const message = document.getElementById('updateMessage');
+            const downloadBtn = document.getElementById('updateDownloadBtn');
+
+            // Format the release notes properly
+            let formattedNotes = '';
+            if (updateInfo.ReleaseNotes) {
+                // Split by common delimiters and format nicely
+                const lines = updateInfo.ReleaseNotes.split(/\n|•|-/);
+                const cleanLines = lines
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .slice(0, 3); // Show first 3 features
+
+                if (cleanLines.length > 0) {
+                    formattedNotes = '\n\n✨ New Features:\n• ' + cleanLines.join('\n• ');
+                }
+            }
+
+            message.innerHTML = `Version <strong>${updateInfo.LatestVersion}</strong> is available (current: ${updateInfo.CurrentVersion}).${formattedNotes}`;
+
+            downloadBtn.onclick = () => {
+                if (updateInfo.ReleaseUrl) {
+                    window.open(updateInfo.ReleaseUrl, '_blank');
+                } else {
+                    window.open('https://github.com/JFLXCLOUD/PlexPrerollManager/releases', '_blank');
+                }
+            };
+
+            notification.style.display = 'block';
+
+            // Add dismiss functionality
+            document.getElementById('updateDismissBtn').onclick = () => {
+                notification.style.display = 'none';
+                // Store dismissal in localStorage to avoid showing again
+                localStorage.setItem('updateDismissed', updateInfo.LatestVersion);
+            };
+
+            // Check if user already dismissed this version
+            const dismissedVersion = localStorage.getItem('updateDismissed');
+            if (dismissedVersion === updateInfo.LatestVersion) {
+                notification.style.display = 'none';
+            }
+        }
+
+        // ===== Event Listeners =====
+
+        // Backup/Restore event listeners
+        document.getElementById('createBackupBtn').addEventListener('click', createBackup);
+        document.getElementById('refreshBackupsBtn').addEventListener('click', loadBackups);
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadStatus();
             loadCategories();
             loadSchedules();
+            loadBackups();
+            checkForUpdates();
 
             // Refresh data every 30 seconds
             setInterval(() => {
@@ -1317,6 +1618,9 @@
                 loadCategories();
                 loadSchedules();
             }, 30000);
+
+            // Check for updates every 4 hours
+            setInterval(checkForUpdates, 4 * 60 * 60 * 1000);
         });
     </script>
 </body>
