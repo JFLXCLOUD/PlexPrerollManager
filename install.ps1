@@ -5,7 +5,8 @@ param(
     [string]$InstallPath = "$env:ProgramFiles\PlexPrerollManager",
     [string]$DataPath = "$env:ProgramData\PlexPrerollManager",
     [switch]$SkipFFmpeg,
-    [switch]$Force
+    [switch]$Force,
+    [switch]$Debug
 )
 
 #Requires -Version 5.1
@@ -13,6 +14,15 @@ param(
 
 Write-Host "PlexPrerollManager One-Click Installer" -ForegroundColor Cyan
 Write-Host "======================================" -ForegroundColor Cyan
+Write-Host "Starting installation at $(Get-Date)" -ForegroundColor Gray
+if ($Debug) {
+    Write-Host "DEBUG MODE ENABLED" -ForegroundColor Magenta
+    Write-Host "InstallPath: $InstallPath" -ForegroundColor Magenta
+    Write-Host "DataPath: $DataPath" -ForegroundColor Magenta
+    Write-Host "SkipFFmpeg: $SkipFFmpeg" -ForegroundColor Magenta
+    Write-Host "Force: $Force" -ForegroundColor Magenta
+}
+Write-Host ""
 
 # Check if running as administrator
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -315,5 +325,16 @@ Write-Host "Thank you for installing PlexPrerollManager!" -ForegroundColor Cyan
 
 # Wait for user input before closing
 Write-Host ""
-Write-Host "Press Enter to exit..." -ForegroundColor Yellow
-Read-Host
+Write-Host "Installation completed. Press any key to exit..." -ForegroundColor Yellow
+Write-Host "(If this window closes immediately, the installation may have failed)" -ForegroundColor Red
+
+# More robust wait mechanism
+try {
+    $null = [Console]::ReadKey($true)
+} catch {
+    # Fallback for systems where ReadKey doesn't work
+    Write-Host "Press Enter to continue..."
+    $null = Read-Host
+}
+
+Write-Host "Exiting installer..." -ForegroundColor Cyan
