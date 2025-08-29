@@ -407,6 +407,60 @@ namespace PlexPrerollManager
                 }
             });
 
+            // ===== Backup/Restore API Endpoints =====
+
+            app.MapPost("/api/backup", async ctx =>
+            {
+                var prerollService = ctx.RequestServices.GetRequiredService<IPrerollService>();
+                var result = await prerollService.CreateBackupAsync();
+
+                ctx.Response.ContentType = "application/json";
+                ctx.Response.StatusCode = result.Success ? 200 : 500;
+                await ctx.Response.WriteAsync(JsonSerializer.Serialize(result));
+            });
+
+            app.MapPost("/api/backup/restore", async ctx =>
+            {
+                using var sr = new StreamReader(ctx.Request.Body);
+                var body = await sr.ReadToEndAsync();
+                var data = JsonSerializer.Deserialize<Dictionary<string, string>>(body);
+                var backupPath = data?["backupPath"];
+
+                if (string.IsNullOrEmpty(backupPath))
+                {
+                    ctx.Response.StatusCode = 400;
+                    await ctx.Response.WriteAsync("{\"error\":\"Backup path is required\"}");
+                    return;
+                }
+
+                var prerollService = ctx.RequestServices.GetRequiredService<IPrerollService>();
+                var result = await prerollService.RestoreBackupAsync(backupPath);
+
+                ctx.Response.ContentType = "application/json";
+                ctx.Response.StatusCode = result.Success ? 200 : 500;
+                await ctx.Response.WriteAsync(JsonSerializer.Serialize(result));
+            });
+
+            app.MapGet("/api/backups", async ctx =>
+            {
+                var prerollService = ctx.RequestServices.GetRequiredService<IPrerollService>();
+                var backups = await prerollService.GetAvailableBackupsAsync();
+
+                ctx.Response.ContentType = "application/json";
+                await ctx.Response.WriteAsync(JsonSerializer.Serialize(backups));
+            });
+
+            // ===== Update Check API Endpoints =====
+
+            app.MapGet("/api/updates/check", async ctx =>
+            {
+                var prerollService = ctx.RequestServices.GetRequiredService<IPrerollService>();
+                var updateInfo = await prerollService.CheckForUpdatesAsync();
+
+                ctx.Response.ContentType = "application/json";
+                await ctx.Response.WriteAsync(JsonSerializer.Serialize(updateInfo));
+            });
+
             app.Logger.LogInformation("Plex Preroll Manager web UI: http://localhost:8089");
             await app.RunAsync();
         }
@@ -471,6 +525,14 @@ namespace PlexPrerollManager
 
             // Thumbnail methods
             string GetThumbnailsPath();
+
+            // Backup/Restore methods
+            Task<BackupResult> CreateBackupAsync();
+            Task<RestoreResult> RestoreBackupAsync(string backupFilePath);
+            Task<List<BackupInfo>> GetAvailableBackupsAsync();
+
+            // Update check methods
+            Task<UpdateInfo> CheckForUpdatesAsync();
         }
 
         public class PrerollService : IPrerollService
@@ -633,6 +695,177 @@ namespace PlexPrerollManager
                 if (videos.Count == 0) return;
 
                 await _plexService.UpdatePrerollsAsync(videos.Select(v => v.FilePath).ToList());
+            }
+
+            // ===== Backup/Restore Methods =====
+
+            public async Task<BackupResult> CreateBackupAsync()
+            {
+                try
+                {
+                    var backup = new PrerollBackup
+                    {
+                        Timestamp = DateTime.Now,
+                        Version = "1.0.0",
+                        Config = await LoadConfigAsync(),
+                        Categories = new List<BackupCategory>()
+                    };
+
+                    // Backup category information and video metadata
+                    if (Directory.Exists(PrerollsPath))
+                    {
+                        foreach (var categoryDir in Directory.GetDirectories(PrerollsPath))
+                        {
+                            var categoryName = Path.GetFileName(categoryDir);
+                            var videos = await GetPrerollsByCategoryAsync(categoryName);
+
+                            backup.Categories.Add(new BackupCategory
+                            {
+                                Name = categoryName,
+                                Videos = videos.Select(v => new BackupVideo
+                                {
+                                    Name = v.Name,
+                                    FileSizeBytes = v.FileSizeBytes,
+                                    CreatedDate = v.CreatedDate,
+                                    Order = v.Order
+                                }).ToList()
+                            });
+                        }
+                    }
+
+                    // Save backup to file
+                    var backupPath = Path.Combine(ConfigPath.Replace("config.json", ""), "backups");
+                    Directory.CreateDirectory(backupPath);
+
+                    var backupFile = Path.Combine(backupPath, $"backup_{DateTime.Now:yyyyMMdd_HHmmss}.json");
+                    var json = JsonSerializer.Serialize(backup, new JsonSerializerOptions { WriteIndented = true });
+                    await File.WriteAllTextAsync(backupFile, json);
+
+                    _logger.LogInformation("Backup created: {file}", backupFile);
+                    return new BackupResult { Success = true, FilePath = backupFile, Message = "Backup created successfully" };
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating backup");
+                    return new BackupResult { Success = false, Error = ex.Message };
+                }
+            }
+
+            public async Task<RestoreResult> RestoreBackupAsync(string backupFilePath)
+            {
+                try
+                {
+                    if (!File.Exists(backupFilePath))
+                        return new RestoreResult { Success = false, Error = "Backup file not found" };
+
+                    var json = await File.ReadAllTextAsync(backupFilePath);
+                    var backup = JsonSerializer.Deserialize<PrerollBackup>(json);
+
+                    if (backup == null)
+                        return new RestoreResult { Success = false, Error = "Invalid backup file" };
+
+                    // Restore configuration
+                    await SaveConfigAsync(backup.Config);
+
+                    // Restore categories and videos (metadata only, not actual files)
+                    foreach (var category in backup.Categories)
+                    {
+                        var categoryPath = Path.Combine(PrerollsPath, category.Name);
+                        Directory.CreateDirectory(categoryPath);
+
+                        // Note: This only restores metadata. Actual video files would need to be manually restored
+                        _logger.LogInformation("Restored category: {category} with {count} videos", category.Name, category.Videos.Count);
+                    }
+
+                    _logger.LogInformation("Backup restored from: {file}", backupFilePath);
+                    return new RestoreResult { Success = true, Message = $"Restored {backup.Categories.Count} categories and configuration" };
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error restoring backup");
+                    return new RestoreResult { Success = false, Error = ex.Message };
+                }
+            }
+
+            public async Task<List<BackupInfo>> GetAvailableBackupsAsync()
+            {
+                var backups = new List<BackupInfo>();
+                var backupPath = Path.Combine(ConfigPath.Replace("config.json", ""), "backups");
+
+                if (Directory.Exists(backupPath))
+                {
+                    foreach (var file in Directory.GetFiles(backupPath, "backup_*.json"))
+                    {
+                        try
+                        {
+                            var json = await File.ReadAllTextAsync(file);
+                            var backup = JsonSerializer.Deserialize<PrerollBackup>(json);
+
+                            if (backup != null)
+                            {
+                                backups.Add(new BackupInfo
+                                {
+                                    FilePath = file,
+                                    Timestamp = backup.Timestamp,
+                                    Version = backup.Version,
+                                    CategoryCount = backup.Categories.Count,
+                                    TotalVideos = backup.Categories.Sum(c => c.Videos.Count),
+                                    FileSize = new FileInfo(file).Length
+                                });
+                            }
+                        }
+                        catch
+                        {
+                            // Skip invalid backup files
+                        }
+                    }
+                }
+
+                return backups.OrderByDescending(b => b.Timestamp).ToList();
+            }
+
+            // ===== Update Check Methods =====
+
+            public async Task<UpdateInfo> CheckForUpdatesAsync()
+            {
+                try
+                {
+                    using var client = new HttpClient();
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("PlexPrerollManager/1.0.0");
+
+                    var response = await client.GetAsync("https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest");
+                    response.EnsureSuccessStatusCode();
+
+                    var json = await response.Content.ReadAsStringAsync();
+                    var release = JsonSerializer.Deserialize<GitHubRelease>(json);
+
+                    if (release != null)
+                    {
+                        var currentVersion = new Version("1.0.0");
+                        var latestVersion = new Version(release.TagName.TrimStart('v'));
+
+                        return new UpdateInfo
+                        {
+                            CurrentVersion = currentVersion.ToString(),
+                            LatestVersion = latestVersion.ToString(),
+                            IsUpdateAvailable = latestVersion > currentVersion,
+                            ReleaseUrl = release.HtmlUrl,
+                            ReleaseNotes = release.Body,
+                            PublishedAt = release.PublishedAt
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error checking for updates");
+                }
+
+                return new UpdateInfo
+                {
+                    CurrentVersion = "1.0.0",
+                    LatestVersion = "1.0.0",
+                    IsUpdateAvailable = false
+                };
             }
 
             // ===== Scheduling Methods =====
@@ -1321,6 +1554,82 @@ namespace PlexPrerollManager
             public string ServerName { get; set; } = "";
             public string Version { get; set; } = "";
             public string? Error { get; set; }
+        }
+
+        // ===== Backup/Restore Models =====
+
+        public class PrerollBackup
+        {
+            public DateTime Timestamp { get; set; }
+            public string Version { get; set; } = "";
+            public PrerollConfig Config { get; set; } = new();
+            public List<BackupCategory> Categories { get; set; } = new();
+        }
+
+        public class BackupCategory
+        {
+            public string Name { get; set; } = "";
+            public List<BackupVideo> Videos { get; set; } = new();
+        }
+
+        public class BackupVideo
+        {
+            public string Name { get; set; } = "";
+            public long FileSizeBytes { get; set; }
+            public DateTime CreatedDate { get; set; }
+            public int Order { get; set; }
+        }
+
+        public class BackupResult
+        {
+            public bool Success { get; set; }
+            public string? FilePath { get; set; }
+            public string? Error { get; set; }
+            public string? Message { get; set; }
+        }
+
+        public class RestoreResult
+        {
+            public bool Success { get; set; }
+            public string? Error { get; set; }
+            public string? Message { get; set; }
+        }
+
+        public class BackupInfo
+        {
+            public string FilePath { get; set; } = "";
+            public DateTime Timestamp { get; set; }
+            public string Version { get; set; } = "";
+            public int CategoryCount { get; set; }
+            public int TotalVideos { get; set; }
+            public long FileSize { get; set; }
+        }
+
+        // ===== Update Check Models =====
+
+        public class UpdateInfo
+        {
+            public string CurrentVersion { get; set; } = "";
+            public string LatestVersion { get; set; } = "";
+            public bool IsUpdateAvailable { get; set; }
+            public string? ReleaseUrl { get; set; }
+            public string? ReleaseNotes { get; set; }
+            public DateTime? PublishedAt { get; set; }
+        }
+
+        public class GitHubRelease
+        {
+            [JsonPropertyName("tag_name")]
+            public string TagName { get; set; } = "";
+
+            [JsonPropertyName("html_url")]
+            public string HtmlUrl { get; set; } = "";
+
+            [JsonPropertyName("body")]
+            public string Body { get; set; } = "";
+
+            [JsonPropertyName("published_at")]
+            public DateTime? PublishedAt { get; set; }
         }
 
     }
