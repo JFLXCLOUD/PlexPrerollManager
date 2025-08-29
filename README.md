@@ -56,26 +56,6 @@ A comprehensive web-based management system for Plex cinema prerolls with advanc
 choco install ffmpeg
 ```
 
-#### Linux
-```bash
-# Ubuntu/Debian
-sudo apt update && sudo apt install ffmpeg
-
-# CentOS/RHEL
-sudo yum install ffmpeg
-
-# Arch Linux
-sudo pacman -S ffmpeg
-```
-
-#### macOS
-```bash
-# Using Homebrew
-brew install ffmpeg
-
-# Or using MacPorts
-sudo port install ffmpeg
-```
 
 ## Quick Installation (One-Liner)
 
@@ -148,6 +128,29 @@ Edit `appsettings.json` to configure:
 - Preroll storage paths
 - Service settings
 
+### Finding Your Plex Token
+To get your Plex token for authentication:
+
+1. **Open Plex Web App**: Go to your Plex server in a web browser
+2. **Sign In**: Make sure you're signed in to your Plex account
+3. **Get Token**: Visit this URL in your browser:
+   ```
+   http://localhost:32400/web/index.html#!/account
+   ```
+   (Replace `localhost:32400` with your Plex server address if different)
+
+4. **Copy Token**: Look for "X-Plex-Token" in the URL or use browser developer tools:
+   - Press `F12` to open developer tools
+   - Go to the "Network" tab
+   - Refresh the page
+   - Look for any request and check the "X-Plex-Token" header
+
+5. **Alternative Method**: Use Plex's token generator:
+   - Visit: https://plex.tv/pms/resources.xml?includeHttps=1&X-Plex-Token=YOUR_TOKEN
+   - Replace `YOUR_TOKEN` with your actual token to verify it works
+
+**Security Note**: Keep your Plex token secure and don't share it publicly.
+
 ### Video Storage
 Videos are stored in: `%ProgramData%\PlexPrerollManager\Prerolls\`
 Thumbnails are stored in: `%ProgramData%\PlexPrerollManager\Prerolls\.thumbnails\`
@@ -187,51 +190,6 @@ Thumbnails are stored in: `%ProgramData%\PlexPrerollManager\Prerolls\.thumbnails
 - Application logs are written to Windows Event Log
 - Additional logging available in the console when running manually
 
-## Development
-
-### Building from Source
-```bash
-# Clone the repository
-git clone https://github.com/JFLXCLOUD/PlexPrerollManager.git
-cd PlexPrerollManager
-
-# Build the application
-dotnet build
-
-# Publish for production
-dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
-```
-
-### Preparing a Release
-Use the included release preparation script:
-```bash
-# Prepare a new release
-.\prepare-release.ps1 -Version "1.2.0" -ReleaseNotes "Add bulk upload feature"
-
-# This will:
-# - Update version numbers
-# - Build the application
-# - Create release archive
-# - Generate checksums
-# - Create release notes
-```
-
-### Project Structure
-```
-PlexPrerollManager/
-├── Program.cs                    # Main application and API endpoints
-├── PlexPrerollManager.csproj     # Project configuration
-├── dashboard.html               # Main web interface
-├── corrected_dashboard.html     # Enhanced web interface
-├── scheduling-dashboard.html    # Advanced scheduling interface
-├── appsettings.json             # Configuration settings
-├── install.ps1                  # One-click PowerShell installer
-├── install.bat                  # Full Windows service installer
-├── install-simple.bat           # Quick setup installer
-├── prepare-release.ps1          # Release preparation script
-├── .gitignore                   # Git ignore rules
-└── README.md                    # This documentation
-```
 
 ## Contributing
 
@@ -245,37 +203,6 @@ PlexPrerollManager/
 
 This project is open source. Feel free to use, modify, and distribute.
 
-## GitHub Repository Setup
-
-### Initial Setup
-1. **Create a new GitHub repository** named `PlexPrerollManager`
-2. **Push your code**:
-  ```bash
-  git init
-  git add .
-  git commit -m "Initial commit: PlexPrerollManager with bulk upload"
-  git branch -M main
-  git remote add origin https://github.com/JFLXCLOUD/PlexPrerollManager.git
-  git push -u origin main
-  ```
-
-3. **Update the installation scripts**:
-   - The scripts have been updated with your GitHub username (JFLXCLOUD)
-   - Repository URLs are already configured correctly
-
-### Creating Releases
-1. **Prepare a release**:
-   ```bash
-   .\prepare-release.ps1 -Version "1.0.0"
-   ```
-
-2. **Create GitHub release**:
-   - Go to your repository on GitHub
-   - Click "Releases" → "Create a new release"
-   - Upload the generated ZIP file
-   - Copy release notes from `RELEASE_NOTES.md`
-
-3. **Test the installation** on a clean Windows system
 
 ## Support
 
@@ -285,17 +212,6 @@ For issues, questions, or feature requests:
 3. Create an issue with detailed information
 4. Check the [GitHub Discussions](https://github.com/JFLXCLOUD/PlexPrerollManager/discussions) for community help
 
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Quick Contribution Guide
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and test thoroughly
-4. Commit your changes: `git commit -m 'Add amazing feature'`
-5. Push to the branch: `git push origin feature/amazing-feature`
-6. Open a Pull Request
 
 ---
 
