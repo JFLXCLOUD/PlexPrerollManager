@@ -128,6 +128,29 @@ Edit `appsettings.json` to configure:
 - Preroll storage paths
 - Service settings
 
+### Finding Your Plex Token
+To get your Plex token for authentication:
+
+1. **Open Plex Web App**: Go to your Plex server in a web browser
+2. **Sign In**: Make sure you're signed in to your Plex account
+3. **Get Token**: Visit this URL in your browser:
+   ```
+   http://localhost:32400/web/index.html#!/account
+   ```
+   (Replace `localhost:32400` with your Plex server address if different)
+
+4. **Copy Token**: Look for "X-Plex-Token" in the URL or use browser developer tools:
+   - Press `F12` to open developer tools
+   - Go to the "Network" tab
+   - Refresh the page
+   - Look for any request and check the "X-Plex-Token" header
+
+5. **Alternative Method**: Use Plex's token generator:
+   - Visit: https://plex.tv/pms/resources.xml?includeHttps=1&X-Plex-Token=YOUR_TOKEN
+   - Replace `YOUR_TOKEN` with your actual token to verify it works
+
+**Security Note**: Keep your Plex token secure and don't share it publicly.
+
 ### Video Storage
 Videos are stored in: `%ProgramData%\PlexPrerollManager\Prerolls\`
 Thumbnails are stored in: `%ProgramData%\PlexPrerollManager\Prerolls\.thumbnails\`
