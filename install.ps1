@@ -112,17 +112,56 @@ try {
     Write-Status "Repository URL: $repoUrl"
     Write-Status "Download URL: $downloadUrl"
 
-    # Copy current files to installation directory (for development/testing)
-    Write-Status "Copying application files..."
-    $currentPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-    Write-Status "Copying from: $currentPath"
-    Write-Status "Copying to: $InstallPath"
+    # Download and extract the latest release
+    Write-Status "Downloading latest release..."
+    try {
+        # Get latest release info
+        $apiUrl = "https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest"
+        $release = Invoke-RestMethod -Uri $apiUrl -Method Get
 
-    # Get all files and directories except excluded ones
-    $items = Get-ChildItem -Path $currentPath -Exclude @("*.git*", "*node_modules*", "*.zip", "*.sha256", "release", "PlexPrerollManager-v*")
-    foreach ($item in $items) {
-        if ($item.Name -ne "install.ps1") {  # Don't copy the installer script itself
-            Copy-Item $item.FullName -Destination $InstallPath -Recurse -Force
+        # Find the ZIP asset
+        $zipAsset = $release.assets | Where-Object { $_.name -like "*.zip" -and $_.name -notlike "*.sha256" } | Select-Object -First 1
+
+        if ($zipAsset) {
+            $zipUrl = $zipAsset.browser_download_url
+            Write-Status "Downloading: $zipUrl"
+
+            # Download ZIP file
+            $tempZip = Join-Path $env:TEMP "PlexPrerollManager.zip"
+            Invoke-WebRequest -Uri $zipUrl -OutFile $tempZip
+
+            # Extract ZIP file
+            Write-Status "Extracting files..."
+            Expand-Archive -Path $tempZip -DestinationPath $InstallPath -Force
+
+            # Clean up
+            Remove-Item $tempZip -Force
+
+            Write-Success "Application files downloaded and extracted successfully"
+        } else {
+            throw "Could not find ZIP file in latest release"
+        }
+    } catch {
+        Write-Error "Failed to download release: $_"
+        Write-Warning "Falling back to local file copy for development..."
+
+        # Fallback: Copy current files to installation directory (for development/testing)
+        Write-Status "Copying application files..."
+        $currentPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+        if ($currentPath -and (Test-Path $currentPath)) {
+            Write-Status "Copying from: $currentPath"
+            Write-Status "Copying to: $InstallPath"
+
+            # Get all files and directories except excluded ones
+            $items = Get-ChildItem -Path $currentPath -Exclude @("*.git*", "*node_modules*", "*.zip", "*.sha256", "release", "PlexPrerollManager-v*")
+            foreach ($item in $items) {
+                if ($item.Name -ne "install.ps1") {  # Don't copy the installer script itself
+                    Copy-Item $item.FullName -Destination $InstallPath -Recurse -Force
+                }
+            }
+            Write-Success "Application files copied successfully"
+        } else {
+            throw "Could not determine script path for local copy"
         }
     }
 
