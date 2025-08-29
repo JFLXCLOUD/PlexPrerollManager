@@ -11,8 +11,8 @@ param(
 #Requires -Version 5.1
 #Requires -RunAsAdministrator
 
-Write-Host "🚀 PlexPrerollManager One-Click Installer" -ForegroundColor Cyan
-Write-Host "==============================================" -ForegroundColor Cyan
+Write-Host "PlexPrerollManager One-Click Installer" -ForegroundColor Cyan
+Write-Host "======================================" -ForegroundColor Cyan
 
 # Check if running as administrator
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -22,10 +22,22 @@ if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
 }
 
 # Function to write colored output
-function Write-Status { param($Message) Write-Host "ℹ️  $Message" -ForegroundColor Blue }
-function Write-Success { param($Message) Write-Host "✅ $Message" -ForegroundColor Green }
-function Write-Warning { param($Message) Write-Host "⚠️  $Message" -ForegroundColor Yellow }
-function Write-Error { param($Message) Write-Host "❌ $Message" -ForegroundColor Red }
+function Write-Status {
+    param($Message)
+    Write-Host "INFO: $Message" -ForegroundColor Blue
+}
+function Write-Success {
+    param($Message)
+    Write-Host "SUCCESS: $Message" -ForegroundColor Green
+}
+function Write-Warning {
+    param($Message)
+    Write-Host "WARNING: $Message" -ForegroundColor Yellow
+}
+function Write-Error {
+    param($Message)
+    Write-Host "ERROR: $Message" -ForegroundColor Red
+}
 
 # Check .NET 9.0
 Write-Status "Checking .NET 9.0 installation..."
@@ -128,15 +140,15 @@ try {
 $appsettingsPath = Join-Path $DataPath "appsettings.json"
 if (-not (Test-Path $appsettingsPath) -or $Force) {
     Write-Status "Creating default configuration..."
-    $defaultConfig = @"
+    $defaultConfig = @'
 {
   "Plex": {
     "Url": "http://localhost:32400",
     "Token": ""
   },
   "PrerollManager": {
-    "PrerollsPath": "$DataPath\\Prerolls",
-    "ConfigPath": "$DataPath\\config.json"
+    "PrerollsPath": "' + $DataPath + '\\Prerolls",
+    "ConfigPath": "' + $DataPath + '\\config.json"
   },
   "Logging": {
     "LogLevel": {
@@ -146,7 +158,7 @@ if (-not (Test-Path $appsettingsPath) -or $Force) {
     }
   }
 }
-"@
+'@
     $defaultConfig | Out-File -FilePath $appsettingsPath -Encoding UTF8
     Write-Success "Default configuration created at: $appsettingsPath"
 }
@@ -202,27 +214,27 @@ try {
 
 # Final instructions
 Write-Host ""
-Write-Host "🎉 Installation Complete!" -ForegroundColor Green
-Write-Host "==========================" -ForegroundColor Green
+Write-Host "INSTALLATION COMPLETE!" -ForegroundColor Green
+Write-Host "======================" -ForegroundColor Green
 Write-Host ""
-Write-Host "📱 Web Interface: http://localhost:8089" -ForegroundColor Cyan
-Write-Host "📁 Install Path: $InstallPath" -ForegroundColor Cyan
-Write-Host "📊 Data Path: $DataPath" -ForegroundColor Cyan
+Write-Host "Web Interface: http://localhost:8089" -ForegroundColor Cyan
+Write-Host "Install Path: $InstallPath" -ForegroundColor Cyan
+Write-Host "Data Path: $DataPath" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "🚀 Getting Started:" -ForegroundColor Yellow
+Write-Host "GETTING STARTED:" -ForegroundColor Yellow
 Write-Host "1. Open http://localhost:8089 in your browser"
 Write-Host "2. Configure your Plex server URL and token in the settings"
 Write-Host "3. Upload your first preroll videos!"
 Write-Host ""
-Write-Host "📚 Need Help?" -ForegroundColor Yellow
-Write-Host "• Check the README.md for detailed instructions"
-Write-Host "• View logs in Windows Event Viewer"
-Write-Host "• Visit the GitHub repository for updates"
+Write-Host "NEED HELP?" -ForegroundColor Yellow
+Write-Host "- Check the README.md for detailed instructions"
+Write-Host "- View logs in Windows Event Viewer"
+Write-Host "- Visit the GitHub repository for updates"
 Write-Host ""
-Write-Host "💡 Pro Tips:" -ForegroundColor Magenta
-Write-Host "• Use Bulk Upload to add multiple videos at once"
-Write-Host "• Set up schedules for automatic preroll switching"
-Write-Host "• Check the scheduling dashboard for advanced automation"
+Write-Host "PRO TIPS:" -ForegroundColor Magenta
+Write-Host "- Use Bulk Upload to add multiple videos at once"
+Write-Host "- Set up schedules for automatic preroll switching"
+Write-Host "- Check the scheduling dashboard for advanced automation"
 Write-Host ""
 
 # Wait a moment for service to fully start
@@ -240,4 +252,4 @@ try {
 }
 
 Write-Host ""
-Write-Host "Thank you for installing PlexPrerollManager! 🎬✨" -ForegroundColor Cyan
+Write-Host "Thank you for installing PlexPrerollManager!" -ForegroundColor Cyan
