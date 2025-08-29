@@ -62,14 +62,17 @@ choco install ffmpeg
 ### Windows PowerShell (Recommended)
 Run this one-liner in an elevated PowerShell terminal:
 ```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1'))
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1')); Write-Host "`nInstallation completed. Press any key to exit..." -ForegroundColor Yellow; try { $null = [Console]::ReadKey($true) } catch { Read-Host }; Write-Host "Exiting..." -ForegroundColor Cyan
 ```
+
+**Note:** This one-liner includes a wait command so you can see the installation results before the window closes.
 
 This will:
 - ✅ Download and install PlexPrerollManager
 - ✅ Install FFmpeg automatically
 - ✅ Set up Windows service
 - ✅ Configure everything automatically
+- ✅ Wait for user input before closing
 
 ### Manual Installation
 
