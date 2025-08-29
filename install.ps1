@@ -312,3 +312,8 @@ try {
 
 Write-Host ""
 Write-Host "Thank you for installing PlexPrerollManager!" -ForegroundColor Cyan
+
+# Wait for user input before closing
+Write-Host ""
+Write-Host "Press Enter to exit..." -ForegroundColor Yellow
+Read-Host
