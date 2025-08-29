@@ -105,7 +105,6 @@ try {
 Write-Status "Downloading PlexPrerollManager..."
 $repoUrl = "https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest"
 $downloadUrl = "https://github.com/JFLXCLOUD/PlexPrerollManager/releases/latest/download/PlexPrerollManager.zip"
-$createService = $null
 
 try {
     # For now, we'll use a placeholder. In real deployment, this would download from GitHub
@@ -178,11 +177,12 @@ try {
         }
 
         # Create new service
-        $serviceCommand = "sc.exe create PlexPrerollManager binPath= `"$exePath --contentRoot $InstallPath`" start= auto"
-        $createService = Invoke-Expression $serviceCommand
+        $servicePath = "`"$exePath --contentRoot $InstallPath`""
+        & sc.exe create PlexPrerollManager binPath= $servicePath start= auto | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Windows service created successfully"
         } else {
+            Write-Error "Failed to create service. Exit code: $LASTEXITCODE"
             throw "Failed to create service"
         }
 
