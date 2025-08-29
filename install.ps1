@@ -61,7 +61,7 @@ if (-not $SkipFFmpeg) {
                 Write-Status "Installing Chocolatey..."
                 Set-ExecutionPolicy Bypass -Scope Process -Force
                 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-                iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+                Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
             }
 
             Write-Status "Installing FFmpeg via Chocolatey..."
@@ -93,10 +93,13 @@ try {
 Write-Status "Downloading PlexPrerollManager..."
 $repoUrl = "https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest"
 $downloadUrl = "https://github.com/JFLXCLOUD/PlexPrerollManager/releases/latest/download/PlexPrerollManager.zip"
+$createService = $null
 
 try {
     # For now, we'll use a placeholder. In real deployment, this would download from GitHub
     Write-Status "Downloading from GitHub repository..."
+    Write-Status "Repository URL: $repoUrl"
+    Write-Status "Download URL: $downloadUrl"
 
     # Copy current files to installation directory (for development/testing)
     Write-Status "Copying application files..."
@@ -163,7 +166,8 @@ try {
         }
 
         # Create new service
-        $createService = & sc.exe create PlexPrerollManager binPath= "$exePath --contentRoot $InstallPath" start= auto
+        $serviceCommand = "sc.exe create PlexPrerollManager binPath= `"$exePath --contentRoot $InstallPath`" start= auto"
+        $createService = Invoke-Expression $serviceCommand
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Windows service created successfully"
         } else {
