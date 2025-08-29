@@ -178,7 +178,7 @@ try {
 
         # Create new service
         $servicePath = "`"$exePath --contentRoot $InstallPath`""
-        $result = & sc.exe create PlexPrerollManager binPath= $servicePath start= auto
+        & sc.exe create PlexPrerollManager binPath= $servicePath start= auto | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Windows service created successfully"
         } else {
