@@ -115,7 +115,16 @@ try {
     # Copy current files to installation directory (for development/testing)
     Write-Status "Copying application files..."
     $currentPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-    Copy-Item "$currentPath\*" $InstallPath -Recurse -Force -Exclude @("*.git*", "*node_modules*")
+    Write-Status "Copying from: $currentPath"
+    Write-Status "Copying to: $InstallPath"
+
+    # Get all files and directories except excluded ones
+    $items = Get-ChildItem -Path $currentPath -Exclude @("*.git*", "*node_modules*", "*.zip", "*.sha256", "release", "PlexPrerollManager-v*")
+    foreach ($item in $items) {
+        if ($item.Name -ne "install.ps1") {  # Don't copy the installer script itself
+            Copy-Item $item.FullName -Destination $InstallPath -Recurse -Force
+        }
+    }
 
     Write-Success "Application files copied successfully"
 } catch {
@@ -127,7 +136,18 @@ try {
 Write-Status "Building PlexPrerollManager..."
 try {
     Push-Location $InstallPath
+    # Build the project
+    & dotnet build -c Release
+    if ($LASTEXITCODE -ne 0) {
+        throw "Build failed with exit code $LASTEXITCODE"
+    }
+
+    # Publish the application
     & dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false
+    if ($LASTEXITCODE -ne 0) {
+        throw "Publish failed with exit code $LASTEXITCODE"
+    }
+
     Pop-Location
     Write-Success "Application built successfully"
 } catch {
