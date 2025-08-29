@@ -245,38 +245,6 @@ PlexPrerollManager/
 
 This project is open source. Feel free to use, modify, and distribute.
 
-## GitHub Repository Setup
-
-### Initial Setup
-1. **Create a new GitHub repository** named `PlexPrerollManager`
-2. **Push your code**:
-  ```bash
-  git init
-  git add .
-  git commit -m "Initial commit: PlexPrerollManager with bulk upload"
-  git branch -M main
-  git remote add origin https://github.com/JFLXCLOUD/PlexPrerollManager.git
-  git push -u origin main
-  ```
-
-3. **Update the installation scripts**:
-   - The scripts have been updated with your GitHub username (JFLXCLOUD)
-   - Repository URLs are already configured correctly
-
-### Creating Releases
-1. **Prepare a release**:
-   ```bash
-   .\prepare-release.ps1 -Version "1.0.0"
-   ```
-
-2. **Create GitHub release**:
-   - Go to your repository on GitHub
-   - Click "Releases" → "Create a new release"
-   - Upload the generated ZIP file
-   - Copy release notes from `RELEASE_NOTES.md`
-
-3. **Test the installation** on a clean Windows system
-
 ## Support
 
 For issues, questions, or feature requests:
