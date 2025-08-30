@@ -392,8 +392,7 @@ try {
 
     # Download and extract the latest release
     Write-Status "Downloading latest release..."
-    try {
-        # Get latest release info
+    # Get latest release info
         $apiUrl = "https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest"
         $release = Invoke-RestMethod -Uri $apiUrl -Method Get
 
