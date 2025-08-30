@@ -43,14 +43,37 @@ try {
     $existingService = Get-Service -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
     $existingExePath = Join-Path $InstallPath "PlexPrerollManager.exe"
     
+    # Display ASCII art banner
+    Write-Host ""
+    Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                                                                              ║" -ForegroundColor Cyan
+    Write-Host "║                    ██████╗ ██╗     ███████╗██╗  ██╗██████╗ ██████╗ ███████╗   ║" -ForegroundColor Magenta
+    Write-Host "║                    ██╔══██╗██║     ██╔════╝╚██╗██╔╝██╔══██╗██╔══██╗██╔════╝   ║" -ForegroundColor Magenta
+    Write-Host "║                    ██████╔╝██║     █████╗   ╚███╔╝ ██████╔╝██████╔╝█████╗     ║" -ForegroundColor Magenta
+    Write-Host "║                    ██╔═══╝ ██║     ██╔══╝   ██╔██╗ ██╔═══╝ ██╔══██╗██╔══╝     ║" -ForegroundColor Magenta
+    Write-Host "║                    ██║     ███████╗███████╗██╔╝ ██╗██║     ██║  ██║███████╗   ║" -ForegroundColor Magenta
+    Write-Host "║                    ╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚══════╝   ║" -ForegroundColor Magenta
+    Write-Host "║                                                                              ║" -ForegroundColor Cyan
+    Write-Host "║                    ██████╗ ██████╗ ███████╗██████╗  ██████╗ ██╗     ██╗        ║" -ForegroundColor Green
+    Write-Host "║                    ██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔═══██╗██║     ██║        ║" -ForegroundColor Green
+    Write-Host "║                    ██████╔╝██████╔╝█████╗  ██████╔╝██║   ██║██║     ██║        ║" -ForegroundColor Green
+    Write-Host "║                    ██╔═══╝ ██╔══██╗██╔══╝  ██╔══██╗██║   ██║██║     ██║        ║" -ForegroundColor Green
+    Write-Host "║                    ██║     ██║  ██║███████╗██║  ██║╚██████╔╝███████╗███████╗   ║" -ForegroundColor Green
+    Write-Host "║                    ╚═╝     ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝   ║" -ForegroundColor Green
+    Write-Host "║                                                                              ║" -ForegroundColor Cyan
+    Write-Host "║                          One-Click Installer v2.0                             ║" -ForegroundColor Yellow
+    Write-Host "║                                                                              ║" -ForegroundColor Cyan
+    Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+
     if ((Test-Path $InstallPath) -or $existingService -or (Test-Path $existingExePath)) {
         $existingInstallation = $true
         Write-Log "Detected existing PlexPrerollManager installation"
         Write-Host "🔄 EXISTING INSTALLATION DETECTED - PERFORMING UPGRADE" -ForegroundColor Yellow
-        Write-Host "======================================================" -ForegroundColor Yellow
+        Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Yellow
     } else {
-        Write-Host "PlexPrerollManager One-Click Installer" -ForegroundColor Cyan
-        Write-Host "======================================" -ForegroundColor Cyan
+        Write-Host "✨ PLEX PREROLL MANAGER ONE-CLICK INSTALLER" -ForegroundColor Cyan
+        Write-Host "════════════════════════════════════════════" -ForegroundColor Cyan
     }
     
     Write-Host "Starting installation at $(Get-Date)" -ForegroundColor Gray
@@ -86,22 +109,43 @@ try {
 # Function to write colored output
 function Write-Status {
     param($Message)
-    Write-Host "INFO: $Message" -ForegroundColor Blue
+    Write-Host "ℹ️  $Message" -ForegroundColor Blue
 }
 function Write-Success {
     param($Message)
-    Write-Host "SUCCESS: $Message" -ForegroundColor Green
+    Write-Host "✅ $Message" -ForegroundColor Green
 }
 function Write-Warning {
     param($Message)
-    Write-Host "WARNING: $Message" -ForegroundColor Yellow
+    Write-Host "⚠️  $Message" -ForegroundColor Yellow
 }
 function Write-Error {
     param($Message)
-    Write-Host "ERROR: $Message" -ForegroundColor Red
+    Write-Host "❌ $Message" -ForegroundColor Red
+}
+
+# Function to create section headers
+function Write-SectionHeader {
+    param($Title)
+    Write-Host ""
+    Write-Host "┌─────────────────────────────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+    Write-Host "│ $Title" -ForegroundColor Cyan -NoNewline
+    $padding = 77 - $Title.Length
+    for ($i = 0; $i -lt $padding; $i++) { Write-Host " " -NoNewline }
+    Write-Host "│" -ForegroundColor Cyan
+    Write-Host "└─────────────────────────────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+}
+
+# Function to create subsection headers
+function Write-SubSectionHeader {
+    param($Title)
+    Write-Host ""
+    Write-Host "─── $Title ──────────────────────────────────────────────────────────────" -ForegroundColor Magenta
 }
 
     # Check .NET 9.0
+    Write-SectionHeader "🔧 CHECKING SYSTEM REQUIREMENTS"
+    Write-SubSectionHeader ".NET 9.0 Runtime"
     Write-Log "Checking .NET 9.0 installation..."
     Write-Status "Checking .NET 9.0 installation..."
     try {
@@ -162,6 +206,7 @@ function Write-Error {
 
 # Install FFmpeg if not skipped
 if (-not $SkipFFmpeg) {
+    Write-SubSectionHeader "FFmpeg Video Processing"
     Write-Status "Checking FFmpeg installation..."
     try {
         $ffmpegVersion = & ffmpeg -version 2>$null | Select-Object -First 1
@@ -191,6 +236,11 @@ if (-not $SkipFFmpeg) {
         }
     }
 }
+
+# Visual separator
+Write-Host ""
+Write-Host "═══════════════════════════════════════════════════════════════════════════════" -ForegroundColor Gray
+Write-Host ""
 
 # Handle existing installation (upgrade scenario)
 if ($existingInstallation) {
@@ -260,6 +310,7 @@ try {
 }
 
 # Download latest release from GitHub
+Write-SectionHeader "📦 DOWNLOADING APPLICATION"
 Write-Status "Downloading PlexPrerollManager..."
 $repoUrl = "https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest"
 $downloadUrl = "https://github.com/JFLXCLOUD/PlexPrerollManager/releases/latest/download/PlexPrerollManager.zip"
@@ -286,7 +337,24 @@ try {
 
             # Download ZIP file
             $tempZip = Join-Path $env:TEMP "PlexPrerollManager.zip"
-            Invoke-WebRequest -Uri $zipUrl -OutFile $tempZip
+            Write-Status "Downloading from: $zipUrl"
+            Write-Progress -Activity "Downloading PlexPrerollManager" -Status "Downloading..." -PercentComplete 0
+
+            # Get file size for progress tracking
+            try {
+                $response = Invoke-WebRequest -Uri $zipUrl -Method Head
+                $totalSize = [long]$response.Headers.'Content-Length'
+                Write-Log "Download size: $totalSize bytes"
+            } catch {
+                $totalSize = 0
+                Write-Log "Could not determine download size"
+            }
+
+            # Download with progress
+            $webClient = New-Object System.Net.WebClient
+            $webClient.DownloadFile($zipUrl, $tempZip)
+            Write-Progress -Activity "Downloading PlexPrerollManager" -Status "Download complete" -PercentComplete 100
+            Write-Progress -Activity "Downloading PlexPrerollManager" -Completed
 
             # Extract ZIP file
             Write-Status "Extracting files..."
@@ -682,24 +750,31 @@ try {
 
 # Build the application (only if needed)
 if (-not $skipBuild) {
+    Write-SectionHeader "🔨 BUILDING APPLICATION"
     Write-Status "Building PlexPrerollManager..."
     try {
         Push-Location $InstallPath
+
         # Build the project
+        Write-Progress -Activity "Building PlexPrerollManager" -Status "Building project..." -PercentComplete 25
         & dotnet build -c Release
         if ($LASTEXITCODE -ne 0) {
             throw "Build failed with exit code $LASTEXITCODE"
         }
+        Write-Progress -Activity "Building PlexPrerollManager" -Status "Build complete, publishing..." -PercentComplete 75
 
         # Publish the application
         & dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false
         if ($LASTEXITCODE -ne 0) {
             throw "Publish failed with exit code $LASTEXITCODE"
         }
+        Write-Progress -Activity "Building PlexPrerollManager" -Status "Publish complete" -PercentComplete 100
+        Write-Progress -Activity "Building PlexPrerollManager" -Completed
 
         Pop-Location
         Write-Success "Application built successfully"
     } catch {
+        Write-Progress -Activity "Building PlexPrerollManager" -Completed
         Write-Error "Failed to build application: $_"
         throw "Build failed"
     }
@@ -736,6 +811,7 @@ if (-not (Test-Path $appsettingsPath) -or $Force) {
 }
 
 # Install Windows service
+Write-SectionHeader "⚙️  INSTALLING WINDOWS SERVICE"
 Write-Status "Installing Windows service..."
 try {
     # Determine executable path based on whether we built or downloaded pre-compiled
@@ -819,6 +895,11 @@ try {
 
 # Create desktop shortcut
 Write-Status "Creating desktop shortcut..."
+
+# Visual separator before final setup
+Write-Host ""
+Write-Host "═══════════════════════════════════════════════════════════════════════════════" -ForegroundColor Gray
+Write-Host ""
 try {
     $WshShell = New-Object -comObject WScript.Shell
     $Shortcut = $WshShell.CreateShortcut("$([Environment]::GetFolderPath('Desktop'))\PlexPrerollManager.lnk")
@@ -833,48 +914,55 @@ try {
 
 # Final instructions
 Write-Host ""
+Write-SectionHeader "🎉 INSTALLATION COMPLETE"
 if ($existingInstallation) {
-    Write-Host "UPGRADE COMPLETE!" -ForegroundColor Green
-    Write-Host "================" -ForegroundColor Green
-    Write-Host "PlexPrerollManager has been successfully upgraded!" -ForegroundColor Green
+    Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
+    Write-Host "║                           UPGRADE COMPLETE!                                ║" -ForegroundColor Green
+    Write-Host "║                                                                          ║" -ForegroundColor Green
+    Write-Host "║  PlexPrerollManager has been successfully upgraded to the latest version ║" -ForegroundColor Green
+    Write-Host "║                                                                          ║" -ForegroundColor Green
+    Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
 } else {
-    Write-Host "INSTALLATION COMPLETE!" -ForegroundColor Green
-    Write-Host "======================" -ForegroundColor Green
-    Write-Host "PlexPrerollManager has been successfully installed!" -ForegroundColor Green
+    Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
+    Write-Host "║                         INSTALLATION COMPLETE!                            ║" -ForegroundColor Green
+    Write-Host "║                                                                          ║" -ForegroundColor Green
+    Write-Host "║       PlexPrerollManager has been successfully installed!                ║" -ForegroundColor Green
+    Write-Host "║                                                                          ║" -ForegroundColor Green
+    Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
 }
 Write-Host ""
-Write-Host "Web Interface: http://localhost:8089" -ForegroundColor Cyan
-Write-Host "Install Path: $InstallPath" -ForegroundColor Cyan
-Write-Host "Data Path: $DataPath" -ForegroundColor Cyan
+Write-Host "🌐 Web Interface: http://localhost:8089" -ForegroundColor Cyan
+Write-Host "📁 Install Path: $InstallPath" -ForegroundColor Cyan
+Write-Host "💾 Data Path: $DataPath" -ForegroundColor Cyan
 
 if ($existingInstallation) {
     Write-Host ""
-    Write-Host "UPGRADE NOTES:" -ForegroundColor Yellow
-    Write-Host "- Your configuration and data have been preserved"
-    Write-Host "- Existing preroll videos and categories are intact"
-    Write-Host "- Service has been restarted with the new version"
+    Write-Host "📋 UPGRADE NOTES:" -ForegroundColor Yellow
+    Write-Host "   ✅ Your configuration and data have been preserved"
+    Write-Host "   ✅ Existing preroll videos and categories are intact"
+    Write-Host "   ✅ Service has been restarted with the new version"
 }
 
 Write-Host ""
-Write-Host "GETTING STARTED:" -ForegroundColor Yellow
-Write-Host "1. Open http://localhost:8089 in your browser"
+Write-Host "🚀 GETTING STARTED:" -ForegroundColor Yellow
+Write-Host "   1️⃣  Open http://localhost:8089 in your browser"
 if (-not $existingInstallation) {
-    Write-Host "2. Configure your Plex server URL and token in the settings"
-    Write-Host "3. Upload your first preroll videos!"
+    Write-Host "   2️⃣  Configure your Plex server URL and token in the settings"
+    Write-Host "   3️⃣  Upload your first preroll videos!"
 } else {
-    Write-Host "2. Verify your existing configuration is still correct"
-    Write-Host "3. Check that your preroll videos are still available"
+    Write-Host "   2️⃣  Verify your existing configuration is still correct"
+    Write-Host "   3️⃣  Check that your preroll videos are still available"
 }
 Write-Host ""
-Write-Host "NEED HELP?" -ForegroundColor Yellow
-Write-Host "- Check the README.md for detailed instructions"
-Write-Host "- View logs in Windows Event Viewer"
-Write-Host "- Visit the GitHub repository for updates"
+Write-Host "❓ NEED HELP?" -ForegroundColor Yellow
+Write-Host "   📖 Check the README.md for detailed instructions"
+Write-Host "   📋 View logs in Windows Event Viewer"
+Write-Host "   🔗 Visit the GitHub repository for updates"
 Write-Host ""
-Write-Host "PRO TIPS:" -ForegroundColor Magenta
-Write-Host "- Use Bulk Upload to add multiple videos at once"
-Write-Host "- Set up schedules for automatic preroll switching"
-Write-Host "- Check the scheduling dashboard for advanced automation"
+Write-Host "💡 PRO TIPS:" -ForegroundColor Magenta
+Write-Host "   📤 Use Bulk Upload to add multiple videos at once"
+Write-Host "   ⏰ Set up schedules for automatic preroll switching"
+Write-Host "   📊 Check the scheduling dashboard for advanced automation"
 Write-Host ""
 
 # Wait a moment for service to fully start
@@ -900,12 +988,18 @@ try {
     $global:installError = $_
     Write-Error-Log "Installation failed" $_
     Write-Host ""
-    Write-Host "❌ INSTALLATION FAILED!" -ForegroundColor Red
-    Write-Host "======================" -ForegroundColor Red
-    Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "Log file: $logFile" -ForegroundColor Yellow
+    Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "║                          INSTALLATION FAILED!                             ║" -ForegroundColor Red
+    Write-Host "║                                                                          ║" -ForegroundColor Red
+    Write-Host "║  An error occurred during installation. Please check the details below. ║" -ForegroundColor Red
+    Write-Host "║                                                                          ║" -ForegroundColor Red
+    Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Please check the log file for detailed error information." -ForegroundColor Yellow
+    Write-Host "❌ Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "📋 Log file: $logFile" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "🔍 Please check the log file for detailed error information." -ForegroundColor Yellow
+    Write-Host "🆘 For help, visit the GitHub repository or check the README.md" -ForegroundColor Yellow
 } finally {
     # Always show final status and wait for user
     Write-Host ""
