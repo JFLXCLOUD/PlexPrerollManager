@@ -1090,5 +1090,5 @@ try {
 
     Write-Host "Exiting installer..." -ForegroundColor Cyan
     Write-Log "=== PlexPrerollManager One-Click Installer Ended ==="
-}
+} # End of main try block
 # End of script
