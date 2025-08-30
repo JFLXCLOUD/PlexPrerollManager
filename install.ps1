@@ -856,15 +856,15 @@ if (-not $skipBuild) {
 $appsettingsPath = Join-Path $DataPath "appsettings.json"
 if (-not (Test-Path $appsettingsPath) -or $Force) {
     Write-Status "Creating default configuration..."
-    $defaultConfig = @'
+    $defaultConfig = @"
 {
   "Plex": {
     "Url": "http://localhost:32400",
     "Token": ""
   },
   "PrerollManager": {
-    "PrerollsPath": "' + $DataPath + '\\Prerolls",
-    "ConfigPath": "' + $DataPath + '\\config.json"
+    "PrerollsPath": "$($DataPath)\Prerolls",
+    "ConfigPath": "$($DataPath)\config.json"
   },
   "Logging": {
     "LogLevel": {
@@ -874,7 +874,7 @@ if (-not (Test-Path $appsettingsPath) -or $Force) {
     }
   }
 }
-'@
+"@
     $defaultConfig | Out-File -FilePath $appsettingsPath -Encoding UTF8
     Write-Success "Default configuration created at: $appsettingsPath"
 }
@@ -1091,3 +1091,4 @@ try {
     Write-Host "Exiting installer..." -ForegroundColor Cyan
     Write-Log "=== PlexPrerollManager One-Click Installer Ended ==="
 }
+# End of script
