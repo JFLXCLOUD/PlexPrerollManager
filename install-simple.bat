@@ -83,6 +83,6 @@ echo 3. Configure your Plex server
 echo 4. Upload your first preroll videos!
 echo 5. Try the new Bulk Upload feature!
 echo.
-echo Happy preroll managing! 🎬✨
+echo Happy preroll managing!
 echo.
 pause
