@@ -12,24 +12,62 @@ param(
 #Requires -Version 5.1
 #Requires -RunAsAdministrator
 
-Write-Host "PlexPrerollManager One-Click Installer" -ForegroundColor Cyan
-Write-Host "======================================" -ForegroundColor Cyan
-Write-Host "Starting installation at $(Get-Date)" -ForegroundColor Gray
-if ($Debug) {
-    Write-Host "DEBUG MODE ENABLED" -ForegroundColor Magenta
-    Write-Host "InstallPath: $InstallPath" -ForegroundColor Magenta
-    Write-Host "DataPath: $DataPath" -ForegroundColor Magenta
-    Write-Host "SkipFFmpeg: $SkipFFmpeg" -ForegroundColor Magenta
-    Write-Host "Force: $Force" -ForegroundColor Magenta
-}
-Write-Host ""
+# Setup logging
+$logFile = Join-Path $env:TEMP "PlexPrerollManager_Install_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+$ErrorActionPreference = "Stop"
 
-# Check if running as administrator
-$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "❌ This script must be run as Administrator. Please restart PowerShell as Administrator and try again." -ForegroundColor Red
-    exit 1
+function Write-Log {
+    param($Message, $Level = "INFO")
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $logMessage = "[$timestamp] [$Level] $Message"
+    Write-Host $logMessage
+    Add-Content -Path $logFile -Value $logMessage
 }
+
+function Write-Error-Log {
+    param($Message, $Exception = $null)
+    Write-Log "ERROR: $Message" "ERROR"
+    if ($Exception) {
+        Write-Log "Exception: $($Exception.Message)" "ERROR"
+        Write-Log "Stack Trace: $($Exception.StackTrace)" "ERROR"
+    }
+}
+
+# Global error handling
+$global:installSuccess = $false
+$global:installError = $null
+
+try {
+    Write-Log "=== PlexPrerollManager One-Click Installer Started ==="
+    Write-Log "Log file: $logFile"
+    Write-Host "PlexPrerollManager One-Click Installer" -ForegroundColor Cyan
+    Write-Host "======================================" -ForegroundColor Cyan
+    Write-Host "Starting installation at $(Get-Date)" -ForegroundColor Gray
+    Write-Log "Installation started at $(Get-Date)"
+
+    if ($Debug) {
+        Write-Host "DEBUG MODE ENABLED" -ForegroundColor Magenta
+        Write-Log "DEBUG MODE ENABLED" "DEBUG"
+        Write-Host "InstallPath: $InstallPath" -ForegroundColor Magenta
+        Write-Host "DataPath: $DataPath" -ForegroundColor Magenta
+        Write-Host "SkipFFmpeg: $SkipFFmpeg" -ForegroundColor Magenta
+        Write-Host "Force: $Force" -ForegroundColor Magenta
+        Write-Log "InstallPath: $InstallPath" "DEBUG"
+        Write-Log "DataPath: $DataPath" "DEBUG"
+        Write-Log "SkipFFmpeg: $SkipFFmpeg" "DEBUG"
+        Write-Log "Force: $Force" "DEBUG"
+    }
+    Write-Host ""
+
+    # Check if running as administrator
+    Write-Log "Checking administrator privileges..."
+    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        Write-Error-Log "Script not running as administrator"
+        Write-Host "❌ This script must be run as Administrator. Please restart PowerShell as Administrator and try again." -ForegroundColor Red
+        throw "Administrator privileges required"
+    }
+    Write-Log "Administrator privileges confirmed"
 
 # Function to write colored output
 function Write-Status {
@@ -49,20 +87,25 @@ function Write-Error {
     Write-Host "ERROR: $Message" -ForegroundColor Red
 }
 
-# Check .NET 9.0
-Write-Status "Checking .NET 9.0 installation..."
-try {
-    $dotnetVersion = & dotnet --version 2>$null
-    if ($dotnetVersion -and $dotnetVersion -ge "9.0") {
-        Write-Success ".NET $dotnetVersion found"
-    } else {
-        Write-Error ".NET 9.0 or later is required. Please install from: https://dotnet.microsoft.com/download"
-        exit 1
+    # Check .NET 9.0
+    Write-Log "Checking .NET 9.0 installation..."
+    Write-Status "Checking .NET 9.0 installation..."
+    try {
+        $dotnetVersion = & dotnet --version 2>$null
+        Write-Log ".NET version detected: $dotnetVersion"
+        if ($dotnetVersion -and $dotnetVersion -ge "9.0") {
+            Write-Success ".NET $dotnetVersion found"
+            Write-Log ".NET check passed"
+        } else {
+            Write-Error-Log ".NET version too old: $dotnetVersion"
+            Write-Error ".NET 9.0 or later is required. Please install from: https://dotnet.microsoft.com/download"
+            throw ".NET 9.0 or later required"
+        }
+    } catch {
+        Write-Error-Log ".NET check failed" $_
+        Write-Error ".NET is not installed. Please install .NET 9.0 from: https://dotnet.microsoft.com/download"
+        throw "Dotnet not found"
     }
-} catch {
-    Write-Error ".NET is not installed. Please install .NET 9.0 from: https://dotnet.microsoft.com/download"
-    exit 1
-}
 
 # Install FFmpeg if not skipped
 if (-not $SkipFFmpeg) {
@@ -320,21 +363,40 @@ try {
     Write-Warning "Service may still be starting up. Please wait a moment and try accessing http://localhost:8089"
 }
 
-Write-Host ""
-Write-Host "Thank you for installing PlexPrerollManager!" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Thank you for installing PlexPrerollManager!" -ForegroundColor Cyan
+    $global:installSuccess = $true
+    Write-Log "Installation completed successfully"
 
-# Wait for user input before closing
-Write-Host ""
-Write-Host "Installation completed. Press any key to exit..." -ForegroundColor Yellow
-Write-Host "(If this window closes immediately, the installation may have failed)" -ForegroundColor Red
-
-# More robust wait mechanism
-try {
-    $null = [Console]::ReadKey($true)
 } catch {
-    # Fallback for systems where ReadKey doesn't work
-    Write-Host "Press Enter to continue..."
-    $null = Read-Host
-}
+    $global:installError = $_
+    Write-Error-Log "Installation failed" $_
+    Write-Host ""
+    Write-Host "❌ INSTALLATION FAILED!" -ForegroundColor Red
+    Write-Host "======================" -ForegroundColor Red
+    Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Log file: $logFile" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Please check the log file for detailed error information." -ForegroundColor Yellow
+} finally {
+    # Always show final status and wait for user
+    Write-Host ""
+    if ($global:installSuccess) {
+        Write-Host "Installation completed. Press any key to exit..." -ForegroundColor Yellow
+    } else {
+        Write-Host "Installation failed. Press any key to exit..." -ForegroundColor Red
+        Write-Host "Check the log file: $logFile" -ForegroundColor Yellow
+    }
 
-Write-Host "Exiting installer..." -ForegroundColor Cyan
+    # More robust wait mechanism
+    try {
+        $null = [Console]::ReadKey($true)
+    } catch {
+        # Fallback for systems where ReadKey doesn't work
+        Write-Host "Press Enter to continue..."
+        $null = Read-Host
+    }
+
+    Write-Host "Exiting installer..." -ForegroundColor Cyan
+    Write-Log "=== PlexPrerollManager One-Click Installer Ended ==="
+}
