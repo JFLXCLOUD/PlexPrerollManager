@@ -831,7 +831,7 @@ namespace PlexPrerollManager
                 try
                 {
                     using var client = new HttpClient();
-                    client.DefaultRequestHeaders.UserAgent.ParseAdd("PlexPrerollManager/1.0.0");
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("PlexPrerollManager/1.1.0");
 
                     var response = await client.GetAsync("https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest");
                     response.EnsureSuccessStatusCode();
@@ -841,7 +841,7 @@ namespace PlexPrerollManager
 
                     if (release != null)
                     {
-                        var currentVersion = new Version("1.0.0");
+                        var currentVersion = new Version("1.1.0");
                         var latestVersion = new Version(release.TagName.TrimStart('v'));
 
                         return new UpdateInfo
@@ -862,8 +862,8 @@ namespace PlexPrerollManager
 
                 return new UpdateInfo
                 {
-                    CurrentVersion = "1.0.0",
-                    LatestVersion = "1.0.0",
+                    CurrentVersion = "1.1.0",
+                    LatestVersion = "1.1.0",
                     IsUpdateAvailable = false
                 };
             }
