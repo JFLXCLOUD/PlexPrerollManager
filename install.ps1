@@ -148,11 +148,50 @@ function Write-SubSectionHeader {
     Write-SubSectionHeader ".NET 9.0 Runtime"
     Write-Log "Checking .NET 9.0 installation..."
     Write-Status "Checking .NET 9.0 installation..."
+
+    # Function to check .NET version more robustly
+    function Get-DotNetVersion {
+        try {
+            # First try the standard way
+            $version = & dotnet --version 2>$null
+            if ($version) {
+                return $version
+            }
+        } catch {
+            Write-Log "Standard dotnet command failed, trying alternative methods..."
+        }
+
+        # Try to find dotnet.exe in common locations
+        $commonPaths = @(
+            "$env:ProgramFiles\dotnet\dotnet.exe",
+            "$env:ProgramFiles (x86)\dotnet\dotnet.exe",
+            "$env:LocalAppData\Microsoft\dotnet\dotnet.exe",
+            "$env:USERPROFILE\.dotnet\dotnet.exe"
+        )
+
+        foreach ($path in $commonPaths) {
+            if (Test-Path $path) {
+                try {
+                    $version = & $path --version 2>$null
+                    if ($version) {
+                        Write-Log "Found .NET at: $path"
+                        return $version
+                    }
+                } catch {
+                    Write-Log "Failed to get version from $path"
+                }
+            }
+        }
+
+        return $null
+    }
+
     try {
-        $dotnetVersion = & dotnet --version 2>$null
+        $dotnetVersion = Get-DotNetVersion
         Write-Log ".NET version detected: $dotnetVersion"
+
         if ($dotnetVersion -and $dotnetVersion -ge "9.0") {
-            Write-Success ".NET $dotnetVersion found"
+            Write-Success ".NET $dotnetVersion found - ready to proceed!"
             Write-Log ".NET check passed"
         } else {
             Write-Log ".NET version too old or not found: $dotnetVersion"
@@ -168,17 +207,40 @@ function Write-SubSectionHeader {
                 $scriptBlock = [scriptblock]::Create($installScript.Content)
 
                 Write-Log "Installing .NET 9.0 runtime..."
-                & $scriptBlock -Channel 9.0 -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+                # Remove -NoPath flag to ensure .NET is added to PATH
+                & $scriptBlock -Channel 9.0 -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet"
 
-                # Refresh PATH for current session
-                $dotnetPath = "$env:ProgramFiles\dotnet"
-                if (Test-Path $dotnetPath) {
-                    $env:PATH = "$dotnetPath;$env:PATH"
-                    Write-Log "Added .NET to PATH: $dotnetPath"
+                # Refresh PATH for current session - check multiple possible locations
+                $possibleDotnetPaths = @(
+                    "$env:ProgramFiles\dotnet",
+                    "$env:ProgramFiles\dotnet\dotnet.exe",
+                    "$env:USERPROFILE\.dotnet"
+                )
+
+                $dotnetFound = $false
+                foreach ($dotnetPath in $possibleDotnetPaths) {
+                    if (Test-Path $dotnetPath) {
+                        if ($dotnetPath -like "*.exe") {
+                            $dotnetDir = [System.IO.Path]::GetDirectoryName($dotnetPath)
+                        } else {
+                            $dotnetDir = $dotnetPath
+                        }
+
+                        if ($env:PATH -notlike "*$dotnetDir*") {
+                            $env:PATH = "$dotnetDir;$env:PATH"
+                            Write-Log "Added .NET to PATH: $dotnetDir"
+                        }
+                        $dotnetFound = $true
+                        break
+                    }
                 }
 
-                # Verify installation
-                $newDotnetVersion = & dotnet --version 2>$null
+                if (-not $dotnetFound) {
+                    Write-Log "Warning: Could not find .NET installation directory to add to PATH"
+                }
+
+                # Verify installation with improved detection
+                $newDotnetVersion = Get-DotNetVersion
                 Write-Log "Verification: .NET version after install: $newDotnetVersion"
 
                 if ($newDotnetVersion -and $newDotnetVersion -ge "9.0") {
@@ -186,20 +248,30 @@ function Write-SubSectionHeader {
                     Write-Log ".NET installation completed successfully"
                 } else {
                     Write-Error-Log "Failed to verify .NET installation"
+                    Write-Error "Installation appeared to complete but .NET 9.0 was not found."
+                    Write-Error "Please try installing manually from: https://dotnet.microsoft.com/download/dotnet/9.0"
                     throw ".NET installation verification failed"
                 }
 
             } catch {
                 Write-Error-Log "Automatic .NET installation failed" $_
-                Write-Error "Automatic .NET installation failed. Please install manually from: https://dotnet.microsoft.com/download"
+                Write-Error "Automatic .NET installation failed."
                 Write-Error "Error details: $($_.Exception.Message)"
+                Write-Error ""
+                Write-Error "Please install .NET 9.0 manually from:"
+                Write-Error "https://dotnet.microsoft.com/download/dotnet/9.0"
+                Write-Error ""
+                Write-Error "After manual installation, restart PowerShell and run this installer again."
                 throw "Automatic .NET installation failed"
             }
         }
     } catch {
         Write-Error-Log ".NET check/installation failed" $_
         if ($_.Exception.Message -notlike "*Automatic .NET installation failed*") {
-            Write-Error ".NET is not installed. Please install .NET 9.0 from: https://dotnet.microsoft.com/download"
+            Write-Error ".NET 9.0 is required but was not found."
+            Write-Error "Please install .NET 9.0 from: https://dotnet.microsoft.com/download/dotnet/9.0"
+            Write-Error ""
+            Write-Error "After installation, restart PowerShell and run this installer again."
         }
         throw "Dotnet not found or installation failed"
     }
