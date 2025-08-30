@@ -38,12 +38,26 @@ $global:installSuccess = $false
 $global:installError = $null
 
 try {
+    # Check for existing installation
+    $existingInstallation = $false
+    $existingService = Get-Service -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
+    $existingExePath = Join-Path $InstallPath "PlexPrerollManager.exe"
+    
+    if ((Test-Path $InstallPath) -or $existingService -or (Test-Path $existingExePath)) {
+        $existingInstallation = $true
+        Write-Log "Detected existing PlexPrerollManager installation"
+        Write-Host "🔄 EXISTING INSTALLATION DETECTED - PERFORMING UPGRADE" -ForegroundColor Yellow
+        Write-Host "======================================================" -ForegroundColor Yellow
+    } else {
+        Write-Host "PlexPrerollManager One-Click Installer" -ForegroundColor Cyan
+        Write-Host "======================================" -ForegroundColor Cyan
+    }
+    
+    Write-Host "Starting installation at $(Get-Date)" -ForegroundColor Gray
     Write-Log "=== PlexPrerollManager One-Click Installer Started ==="
     Write-Log "Log file: $logFile"
-    Write-Host "PlexPrerollManager One-Click Installer" -ForegroundColor Cyan
-    Write-Host "======================================" -ForegroundColor Cyan
-    Write-Host "Starting installation at $(Get-Date)" -ForegroundColor Gray
     Write-Log "Installation started at $(Get-Date)"
+    Write-Log "Existing installation detected: $existingInstallation"
 
     if ($Debug) {
         Write-Host "DEBUG MODE ENABLED" -ForegroundColor Magenta
@@ -178,6 +192,58 @@ if (-not $SkipFFmpeg) {
     }
 }
 
+# Handle existing installation (upgrade scenario)
+if ($existingInstallation) {
+    Write-Status "Preparing for upgrade..."
+
+    # Stop existing service
+    if ($existingService) {
+        Write-Log "Stopping existing service..."
+        Write-Status "Stopping existing PlexPrerollManager service..."
+        try {
+            Stop-Service -Name "PlexPrerollManager" -Force -ErrorAction Stop
+            Write-Log "Existing service stopped successfully"
+            Write-Success "Existing service stopped"
+        } catch {
+            Write-Log "Warning: Could not stop existing service: $_"
+            Write-Warning "Could not stop existing service (may already be stopped): $_"
+        }
+    }
+
+    # Backup existing configuration
+    $backupPath = Join-Path $DataPath "backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+    if (Test-Path $DataPath) {
+        Write-Log "Backing up existing configuration to: $backupPath"
+        Write-Status "Backing up existing configuration..."
+        try {
+            Copy-Item -Path $DataPath -Destination $backupPath -Recurse -Force
+            Write-Success "Configuration backed up to: $backupPath"
+            Write-Log "Backup completed successfully"
+        } catch {
+            Write-Log "Warning: Could not backup configuration: $_"
+            Write-Warning "Could not backup configuration: $_"
+        }
+    }
+
+    # Remove old installation files (but keep data directory)
+    if (Test-Path $InstallPath) {
+        Write-Log "Removing old installation files..."
+        Write-Status "Removing old installation files..."
+        try {
+            # Don't remove the data directory, just the program files
+            Get-ChildItem -Path $InstallPath -Exclude "Data" | Remove-Item -Recurse -Force
+            Write-Success "Old installation files removed"
+            Write-Log "Old files removed successfully"
+        } catch {
+            Write-Log "Warning: Could not remove some old files: $_"
+            Write-Warning "Could not remove some old files (may be in use): $_"
+        }
+    }
+
+    Write-Log "Upgrade preparation completed"
+    Write-Success "Ready for upgrade installation"
+}
+
 # Create installation directories
 Write-Status "Creating installation directories..."
 try {
@@ -190,7 +256,7 @@ try {
     Write-Success "Directories created successfully"
 } catch {
     Write-Error "Failed to create directories: $_"
-    exit 1
+    throw "Directory creation failed"
 }
 
 # Download latest release from GitHub
@@ -432,17 +498,38 @@ try {
 
 # Final instructions
 Write-Host ""
-Write-Host "INSTALLATION COMPLETE!" -ForegroundColor Green
-Write-Host "======================" -ForegroundColor Green
+if ($existingInstallation) {
+    Write-Host "UPGRADE COMPLETE!" -ForegroundColor Green
+    Write-Host "================" -ForegroundColor Green
+    Write-Host "PlexPrerollManager has been successfully upgraded!" -ForegroundColor Green
+} else {
+    Write-Host "INSTALLATION COMPLETE!" -ForegroundColor Green
+    Write-Host "======================" -ForegroundColor Green
+    Write-Host "PlexPrerollManager has been successfully installed!" -ForegroundColor Green
+}
 Write-Host ""
 Write-Host "Web Interface: http://localhost:8089" -ForegroundColor Cyan
 Write-Host "Install Path: $InstallPath" -ForegroundColor Cyan
 Write-Host "Data Path: $DataPath" -ForegroundColor Cyan
+
+if ($existingInstallation) {
+    Write-Host ""
+    Write-Host "UPGRADE NOTES:" -ForegroundColor Yellow
+    Write-Host "- Your configuration and data have been preserved"
+    Write-Host "- Existing preroll videos and categories are intact"
+    Write-Host "- Service has been restarted with the new version"
+}
+
 Write-Host ""
 Write-Host "GETTING STARTED:" -ForegroundColor Yellow
 Write-Host "1. Open http://localhost:8089 in your browser"
-Write-Host "2. Configure your Plex server URL and token in the settings"
-Write-Host "3. Upload your first preroll videos!"
+if (-not $existingInstallation) {
+    Write-Host "2. Configure your Plex server URL and token in the settings"
+    Write-Host "3. Upload your first preroll videos!"
+} else {
+    Write-Host "2. Verify your existing configuration is still correct"
+    Write-Host "3. Check that your preroll videos are still available"
+}
 Write-Host ""
 Write-Host "NEED HELP?" -ForegroundColor Yellow
 Write-Host "- Check the README.md for detailed instructions"
