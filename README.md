@@ -60,19 +60,30 @@ choco install ffmpeg
 ## Quick Installation (One-Liner)
 
 ### Windows PowerShell (Recommended)
-Run this one-liner in an elevated PowerShell terminal:
+Run this improved one-liner in an elevated PowerShell terminal:
 ```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1')); Write-Host "`nInstallation completed. Press any key to exit..." -ForegroundColor Yellow; try { $null = [Console]::ReadKey($true) } catch { Read-Host }; Write-Host "Exiting..." -ForegroundColor Cyan
+# Download the installer first (avoids execution issues)
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1" -OutFile "$env:TEMP\install.ps1";
+
+# Execute the installer
+& "$env:TEMP\install.ps1"
 ```
 
-**Note:** This one-liner includes a wait command so you can see the installation results before the window closes.
+**Alternative single-command version:**
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1" -OutFile "$env:TEMP\install.ps1"; & "$env:TEMP\install.ps1"
+```
+
+**Why this approach?** The improved one-liner downloads the script first, then executes it locally. This avoids PowerShell parsing issues that can occur when executing remote scripts directly.
 
 This will:
-- ✅ Download and install PlexPrerollManager
+- ✅ Download the installer script safely
+- ✅ Execute the installer with proper error handling
+- ✅ Install PlexPrerollManager automatically
 - ✅ Install FFmpeg automatically
 - ✅ Set up Windows service
 - ✅ Configure everything automatically
-- ✅ Wait for user input before closing
+- ✅ Provide clear feedback throughout the process
 
 ### Manual Installation
 
@@ -218,6 +229,6 @@ For issues, questions, or feature requests:
 
 ---
 
-**🎉 Thank you for using PlexPrerollManager! Enjoy managing your Plex prerolls with style! 🎬✨**
+**Thank you for using PlexPrerollManager! Enjoy managing your Plex prerolls with style!**
 
 **Star us on GitHub** ⭐ and share with fellow Plex enthusiasts!
