@@ -333,52 +333,104 @@ try {
                             $itemsToMove = Get-ChildItem -Path $subdir.FullName -ErrorAction Stop
                             Write-Log "Found $($itemsToMove.Count) items to move from $($subdir.FullName)"
 
-                            foreach ($item in $itemsToMove) {
+                            # Separate files and directories for processing
+                            $filesToMove = $itemsToMove | Where-Object { -not $_.PSIsContainer }
+                            $dirsToMove = $itemsToMove | Where-Object { $_.PSIsContainer }
+
+                            Write-Log "Processing $($filesToMove.Count) files and $($dirsToMove.Count) directories"
+
+                            # Process files first
+                            foreach ($item in $filesToMove) {
                                 $destinationPath = Join-Path $InstallPath $item.Name
-                                Write-Log "Processing: $($item.FullName) -> $destinationPath"
+                                Write-Log "Processing file: $($item.FullName) -> $destinationPath"
 
                                 # Handle conflicts more robustly
                                 if (Test-Path $destinationPath) {
                                     Write-Log "Destination exists, attempting to remove: $destinationPath"
                                     try {
-                                        if ($item.PSIsContainer) {
-                                            # Source is a directory
-                                            Remove-Item $destinationPath -Force -Recurse -ErrorAction Stop
-                                        } else {
-                                            # Source is a file
-                                            Remove-Item $destinationPath -Force -ErrorAction Stop
-                                        }
-                                        Write-Log "Successfully removed existing item: $destinationPath"
+                                        Remove-Item $destinationPath -Force -ErrorAction Stop
+                                        Write-Log "Successfully removed existing file: $destinationPath"
                                     } catch {
-                                        Write-Log "Warning: Could not remove existing item $destinationPath : $_"
+                                        Write-Log "Warning: Could not remove existing file $destinationPath : $_"
                                         # Try to rename the conflicting item instead
                                         $backupName = "$destinationPath.backup.$(Get-Date -Format 'yyyyMMdd_HHmmss')"
                                         try {
                                             Rename-Item $destinationPath $backupName -ErrorAction Stop
-                                            Write-Log "Renamed conflicting item to: $backupName"
+                                            Write-Log "Renamed conflicting file to: $backupName"
                                         } catch {
-                                            Write-Log "Error: Could not rename conflicting item: $_"
+                                            Write-Log "Error: Could not rename conflicting file: $_"
                                             # Skip this item if we can't handle the conflict
-                                            Write-Log "Skipping item due to unresolvable conflict: $($item.Name)"
+                                            Write-Log "Skipping file due to unresolvable conflict: $($item.Name)"
                                             continue
                                         }
                                     }
                                 }
 
-                                # Now try to move the item
+                                # Now try to move the file
                                 try {
                                     Move-Item $item.FullName -Destination $InstallPath -Force -ErrorAction Stop
-                                    Write-Log "Successfully moved: $($item.FullName) -> $destinationPath"
+                                    Write-Log "Successfully moved file: $($item.FullName) -> $destinationPath"
                                 } catch {
-                                    Write-Log "Error moving item $($item.FullName): $_"
+                                    Write-Log "Error moving file $($item.FullName): $_"
+                                    # Try copy instead of move as a fallback
+                                    try {
+                                        Copy-Item $item.FullName -Destination $InstallPath -Force -ErrorAction Stop
+                                        Remove-Item $item.FullName -Force -ErrorAction Stop
+                                        Write-Log "Used copy+delete fallback for file: $($item.FullName)"
+                                    } catch {
+                                        Write-Log "Error: Copy+delete fallback also failed for file $($item.FullName): $_"
+                                        throw "Failed to move/copy file: $($item.Name)"
+                                    }
+                                }
+                            }
+
+                            # Process directories, but skip the current subdirectory itself
+                            foreach ($item in $dirsToMove) {
+                                # Skip if this directory has the same name as our current subdirectory
+                                if ($item.Name -eq $subdir.Name) {
+                                    Write-Log "Skipping directory with same name as current subdirectory: $($item.Name)"
+                                    continue
+                                }
+
+                                $destinationPath = Join-Path $InstallPath $item.Name
+                                Write-Log "Processing directory: $($item.FullName) -> $destinationPath"
+
+                                # Handle conflicts more robustly
+                                if (Test-Path $destinationPath) {
+                                    Write-Log "Destination exists, attempting to remove: $destinationPath"
+                                    try {
+                                        Remove-Item $destinationPath -Force -Recurse -ErrorAction Stop
+                                        Write-Log "Successfully removed existing directory: $destinationPath"
+                                    } catch {
+                                        Write-Log "Warning: Could not remove existing directory $destinationPath : $_"
+                                        # Try to rename the conflicting item instead
+                                        $backupName = "$destinationPath.backup.$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+                                        try {
+                                            Rename-Item $destinationPath $backupName -ErrorAction Stop
+                                            Write-Log "Renamed conflicting directory to: $backupName"
+                                        } catch {
+                                            Write-Log "Error: Could not rename conflicting directory: $_"
+                                            # Skip this item if we can't handle the conflict
+                                            Write-Log "Skipping directory due to unresolvable conflict: $($item.Name)"
+                                            continue
+                                        }
+                                    }
+                                }
+
+                                # Now try to move the directory
+                                try {
+                                    Move-Item $item.FullName -Destination $InstallPath -Force -ErrorAction Stop
+                                    Write-Log "Successfully moved directory: $($item.FullName) -> $destinationPath"
+                                } catch {
+                                    Write-Log "Error moving directory $($item.FullName): $_"
                                     # Try copy instead of move as a fallback
                                     try {
                                         Copy-Item $item.FullName -Destination $InstallPath -Force -Recurse -ErrorAction Stop
                                         Remove-Item $item.FullName -Force -Recurse -ErrorAction Stop
-                                        Write-Log "Used copy+delete fallback for: $($item.FullName)"
+                                        Write-Log "Used copy+delete fallback for directory: $($item.FullName)"
                                     } catch {
-                                        Write-Log "Error: Copy+delete fallback also failed for $($item.FullName): $_"
-                                        throw "Failed to move/copy item: $($item.Name)"
+                                        Write-Log "Error: Copy+delete fallback also failed for directory $($item.FullName): $_"
+                                        throw "Failed to move/copy directory: $($item.Name)"
                                     }
                                 }
                             }
@@ -410,52 +462,104 @@ try {
                             $itemsToMove = Get-ChildItem -Path $subdir.FullName -ErrorAction Stop
                             Write-Log "Found $($itemsToMove.Count) items to move from $($subdir.FullName)"
 
-                            foreach ($item in $itemsToMove) {
+                            # Separate files and directories for processing
+                            $filesToMove = $itemsToMove | Where-Object { -not $_.PSIsContainer }
+                            $dirsToMove = $itemsToMove | Where-Object { $_.PSIsContainer }
+
+                            Write-Log "Processing $($filesToMove.Count) files and $($dirsToMove.Count) directories"
+
+                            # Process files first
+                            foreach ($item in $filesToMove) {
                                 $destinationPath = Join-Path $InstallPath $item.Name
-                                Write-Log "Processing: $($item.FullName) -> $destinationPath"
+                                Write-Log "Processing file: $($item.FullName) -> $destinationPath"
 
                                 # Handle conflicts more robustly
                                 if (Test-Path $destinationPath) {
                                     Write-Log "Destination exists, attempting to remove: $destinationPath"
                                     try {
-                                        if ($item.PSIsContainer) {
-                                            # Source is a directory
-                                            Remove-Item $destinationPath -Force -Recurse -ErrorAction Stop
-                                        } else {
-                                            # Source is a file
-                                            Remove-Item $destinationPath -Force -ErrorAction Stop
-                                        }
-                                        Write-Log "Successfully removed existing item: $destinationPath"
+                                        Remove-Item $destinationPath -Force -ErrorAction Stop
+                                        Write-Log "Successfully removed existing file: $destinationPath"
                                     } catch {
-                                        Write-Log "Warning: Could not remove existing item $destinationPath : $_"
+                                        Write-Log "Warning: Could not remove existing file $destinationPath : $_"
                                         # Try to rename the conflicting item instead
                                         $backupName = "$destinationPath.backup.$(Get-Date -Format 'yyyyMMdd_HHmmss')"
                                         try {
                                             Rename-Item $destinationPath $backupName -ErrorAction Stop
-                                            Write-Log "Renamed conflicting item to: $backupName"
+                                            Write-Log "Renamed conflicting file to: $backupName"
                                         } catch {
-                                            Write-Log "Error: Could not rename conflicting item: $_"
+                                            Write-Log "Error: Could not rename conflicting file: $_"
                                             # Skip this item if we can't handle the conflict
-                                            Write-Log "Skipping item due to unresolvable conflict: $($item.Name)"
+                                            Write-Log "Skipping file due to unresolvable conflict: $($item.Name)"
                                             continue
                                         }
                                     }
                                 }
 
-                                # Now try to move the item
+                                # Now try to move the file
                                 try {
                                     Move-Item $item.FullName -Destination $InstallPath -Force -ErrorAction Stop
-                                    Write-Log "Successfully moved: $($item.FullName) -> $destinationPath"
+                                    Write-Log "Successfully moved file: $($item.FullName) -> $destinationPath"
                                 } catch {
-                                    Write-Log "Error moving item $($item.FullName): $_"
+                                    Write-Log "Error moving file $($item.FullName): $_"
+                                    # Try copy instead of move as a fallback
+                                    try {
+                                        Copy-Item $item.FullName -Destination $InstallPath -Force -ErrorAction Stop
+                                        Remove-Item $item.FullName -Force -ErrorAction Stop
+                                        Write-Log "Used copy+delete fallback for file: $($item.FullName)"
+                                    } catch {
+                                        Write-Log "Error: Copy+delete fallback also failed for file $($item.FullName): $_"
+                                        throw "Failed to move/copy file: $($item.Name)"
+                                    }
+                                }
+                            }
+
+                            # Process directories, but skip the current subdirectory itself
+                            foreach ($item in $dirsToMove) {
+                                # Skip if this directory has the same name as our current subdirectory
+                                if ($item.Name -eq $subdir.Name) {
+                                    Write-Log "Skipping directory with same name as current subdirectory: $($item.Name)"
+                                    continue
+                                }
+
+                                $destinationPath = Join-Path $InstallPath $item.Name
+                                Write-Log "Processing directory: $($item.FullName) -> $destinationPath"
+
+                                # Handle conflicts more robustly
+                                if (Test-Path $destinationPath) {
+                                    Write-Log "Destination exists, attempting to remove: $destinationPath"
+                                    try {
+                                        Remove-Item $destinationPath -Force -Recurse -ErrorAction Stop
+                                        Write-Log "Successfully removed existing directory: $destinationPath"
+                                    } catch {
+                                        Write-Log "Warning: Could not remove existing directory $destinationPath : $_"
+                                        # Try to rename the conflicting item instead
+                                        $backupName = "$destinationPath.backup.$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+                                        try {
+                                            Rename-Item $destinationPath $backupName -ErrorAction Stop
+                                            Write-Log "Renamed conflicting directory to: $backupName"
+                                        } catch {
+                                            Write-Log "Error: Could not rename conflicting directory: $_"
+                                            # Skip this item if we can't handle the conflict
+                                            Write-Log "Skipping directory due to unresolvable conflict: $($item.Name)"
+                                            continue
+                                        }
+                                    }
+                                }
+
+                                # Now try to move the directory
+                                try {
+                                    Move-Item $item.FullName -Destination $InstallPath -Force -ErrorAction Stop
+                                    Write-Log "Successfully moved directory: $($item.FullName) -> $destinationPath"
+                                } catch {
+                                    Write-Log "Error moving directory $($item.FullName): $_"
                                     # Try copy instead of move as a fallback
                                     try {
                                         Copy-Item $item.FullName -Destination $InstallPath -Force -Recurse -ErrorAction Stop
                                         Remove-Item $item.FullName -Force -Recurse -ErrorAction Stop
-                                        Write-Log "Used copy+delete fallback for: $($item.FullName)"
+                                        Write-Log "Used copy+delete fallback for directory: $($item.FullName)"
                                     } catch {
-                                        Write-Log "Error: Copy+delete fallback also failed for $($item.FullName): $_"
-                                        throw "Failed to move/copy item: $($item.Name)"
+                                        Write-Log "Error: Copy+delete fallback also failed for directory $($item.FullName): $_"
+                                        throw "Failed to move/copy directory: $($item.Name)"
                                     }
                                 }
                             }
