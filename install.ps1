@@ -327,23 +327,53 @@ try {
 
                     if (Test-Path $subdirExePath) {
                         Write-Log "Found executable in subdirectory: $subdirExePath"
-                        # Move files from subdirectory to root
+                        # Move files from subdirectory to root, handling conflicts
                         Write-Status "Moving files from subdirectory to root..."
-                        Get-ChildItem -Path $subdir.FullName | Move-Item -Destination $InstallPath -Force
-                        Remove-Item $subdir.FullName -Force
-                        $skipBuild = $true
-                        $foundFiles = $true
-                        Write-Log "Files moved successfully, detected compiled release"
+                        try {
+                            $itemsToMove = Get-ChildItem -Path $subdir.FullName
+                            foreach ($item in $itemsToMove) {
+                                $destinationPath = Join-Path $InstallPath $item.Name
+                                if (Test-Path $destinationPath) {
+                                    Write-Log "Removing existing file: $destinationPath"
+                                    Remove-Item $destinationPath -Force -Recurse
+                                }
+                                Write-Log "Moving: $($item.FullName) -> $destinationPath"
+                                Move-Item $item.FullName -Destination $InstallPath -Force
+                            }
+                            Remove-Item $subdir.FullName -Force
+                            $skipBuild = $true
+                            $foundFiles = $true
+                            Write-Log "Files moved successfully, detected compiled release"
+                            Write-Success "Files moved successfully"
+                        } catch {
+                            Write-Error-Log "Failed to move files from subdirectory" $_
+                            throw "Failed to move files from subdirectory: $_"
+                        }
                         break
                     } elseif (Test-Path $subdirProjectPath) {
                         Write-Log "Found project file in subdirectory: $subdirProjectPath"
-                        # Move files from subdirectory to root
+                        # Move files from subdirectory to root, handling conflicts
                         Write-Status "Moving files from subdirectory to root..."
-                        Get-ChildItem -Path $subdir.FullName | Move-Item -Destination $InstallPath -Force
-                        Remove-Item $subdir.FullName -Force
-                        $skipBuild = $false
-                        $foundFiles = $true
-                        Write-Log "Files moved successfully, detected source code release"
+                        try {
+                            $itemsToMove = Get-ChildItem -Path $subdir.FullName
+                            foreach ($item in $itemsToMove) {
+                                $destinationPath = Join-Path $InstallPath $item.Name
+                                if (Test-Path $destinationPath) {
+                                    Write-Log "Removing existing file: $destinationPath"
+                                    Remove-Item $destinationPath -Force -Recurse
+                                }
+                                Write-Log "Moving: $($item.FullName) -> $destinationPath"
+                                Move-Item $item.FullName -Destination $InstallPath -Force
+                            }
+                            Remove-Item $subdir.FullName -Force
+                            $skipBuild = $false
+                            $foundFiles = $true
+                            Write-Log "Files moved successfully, detected source code release"
+                            Write-Success "Files moved successfully"
+                        } catch {
+                            Write-Error-Log "Failed to move files from subdirectory" $_
+                            throw "Failed to move files from subdirectory: $_"
+                        }
                         break
                     }
                 }
@@ -373,9 +403,38 @@ try {
 
         if (-not $currentPath) {
             Write-Log "Current path is null, trying alternative methods..."
-            # Try alternative methods to get the script directory
-            $currentPath = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
-            Write-Log "Alternative current path: $currentPath"
+
+            # Try multiple fallback methods for remote execution
+            if ($MyInvocation.MyCommand.Path) {
+                $currentPath = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
+                Write-Log "Method 1 - System.IO.Path: $currentPath"
+            }
+
+            if (-not $currentPath -and $PSScriptRoot) {
+                $currentPath = $PSScriptRoot
+                Write-Log "Method 2 - PSScriptRoot: $currentPath"
+            }
+
+            if (-not $currentPath) {
+                # Last resort: try to find the script in common locations
+                $possiblePaths = @(
+                    "$env:TEMP\PlexPrerollManager",
+                    "$env:USERPROFILE\Downloads\PlexPrerollManager",
+                    "$env:USERPROFILE\Desktop\PlexPrerollManager",
+                    ".\PlexPrerollManager"
+                )
+
+                foreach ($path in $possiblePaths) {
+                    Write-Log "Checking possible path: $path"
+                    if (Test-Path $path) {
+                        $currentPath = $path
+                        Write-Log "Found valid path: $currentPath"
+                        break
+                    }
+                }
+            }
+
+            Write-Log "Final determined current path: $currentPath"
         }
 
         if ($currentPath -and (Test-Path $currentPath)) {
