@@ -230,6 +230,23 @@ try {
             Remove-Item $tempZip -Force
 
             Write-Success "Application files downloaded and extracted successfully"
+
+            # Check if this is a compiled release (contains published binaries) or source code
+            $exePath = Join-Path $InstallPath "PlexPrerollManager.exe"
+            $projectFile = Join-Path $InstallPath "PlexPrerollManager.csproj"
+
+            if (Test-Path $exePath) {
+                Write-Log "Detected compiled release - skipping build step"
+                Write-Status "Compiled release detected - build not required"
+                $skipBuild = $true
+            } elseif (Test-Path $projectFile) {
+                Write-Log "Detected source code release - build required"
+                Write-Status "Source code detected - will build application"
+                $skipBuild = $false
+            } else {
+                Write-Log "Could not determine release type"
+                throw "Downloaded release does not contain expected files"
+            }
         } else {
             throw "Could not find ZIP file in latest release"
         }
@@ -252,38 +269,42 @@ try {
                 }
             }
             Write-Success "Application files copied successfully"
+            $skipBuild = $false  # Local files are source code, so we need to build
         } else {
             throw "Could not determine script path for local copy"
         }
     }
-
-    Write-Success "Application files copied successfully"
 } catch {
     Write-Error "Failed to download/copy application files: $_"
     exit 1
 }
 
-# Build the application
-Write-Status "Building PlexPrerollManager..."
-try {
-    Push-Location $InstallPath
-    # Build the project
-    & dotnet build -c Release
-    if ($LASTEXITCODE -ne 0) {
-        throw "Build failed with exit code $LASTEXITCODE"
-    }
+# Build the application (only if needed)
+if (-not $skipBuild) {
+    Write-Status "Building PlexPrerollManager..."
+    try {
+        Push-Location $InstallPath
+        # Build the project
+        & dotnet build -c Release
+        if ($LASTEXITCODE -ne 0) {
+            throw "Build failed with exit code $LASTEXITCODE"
+        }
 
-    # Publish the application
-    & dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false
-    if ($LASTEXITCODE -ne 0) {
-        throw "Publish failed with exit code $LASTEXITCODE"
-    }
+        # Publish the application
+        & dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false
+        if ($LASTEXITCODE -ne 0) {
+            throw "Publish failed with exit code $LASTEXITCODE"
+        }
 
-    Pop-Location
-    Write-Success "Application built successfully"
-} catch {
-    Write-Error "Failed to build application: $_"
-    exit 1
+        Pop-Location
+        Write-Success "Application built successfully"
+    } catch {
+        Write-Error "Failed to build application: $_"
+        throw "Build failed"
+    }
+} else {
+    Write-Log "Skipping build step - using pre-compiled binaries"
+    Write-Status "Using pre-compiled application - build skipped"
 }
 
 # Create appsettings.json if it doesn't exist
@@ -316,7 +337,16 @@ if (-not (Test-Path $appsettingsPath) -or $Force) {
 # Install Windows service
 Write-Status "Installing Windows service..."
 try {
-    $exePath = Join-Path $InstallPath "bin\Release\net9.0\win-x64\publish\PlexPrerollManager.exe"
+    # Determine executable path based on whether we built or downloaded pre-compiled
+    if ($skipBuild) {
+        # Pre-compiled release - executable is directly in install path
+        $exePath = Join-Path $InstallPath "PlexPrerollManager.exe"
+        Write-Log "Using pre-compiled executable: $exePath"
+    } else {
+        # Built from source - executable is in publish directory
+        $exePath = Join-Path $InstallPath "bin\Release\net9.0\win-x64\publish\PlexPrerollManager.exe"
+        Write-Log "Using built executable: $exePath"
+    }
 
     if (Test-Path $exePath) {
         # Stop existing service if running
