@@ -97,14 +97,53 @@ function Write-Error {
             Write-Success ".NET $dotnetVersion found"
             Write-Log ".NET check passed"
         } else {
-            Write-Error-Log ".NET version too old: $dotnetVersion"
-            Write-Error ".NET 9.0 or later is required. Please install from: https://dotnet.microsoft.com/download"
-            throw ".NET 9.0 or later required"
+            Write-Log ".NET version too old or not found: $dotnetVersion"
+            Write-Status "Installing .NET 9.0 automatically..."
+            Write-Log "Starting automatic .NET 9.0 installation"
+
+            try {
+                # Download and run the dotnet-install script
+                $installScriptUrl = "https://dot.net/v1/dotnet-install.ps1"
+                Write-Log "Downloading dotnet-install script from: $installScriptUrl"
+
+                $installScript = Invoke-WebRequest -Uri $installScriptUrl -UseBasicParsing
+                $scriptBlock = [scriptblock]::Create($installScript.Content)
+
+                Write-Log "Installing .NET 9.0 runtime..."
+                & $scriptBlock -Channel 9.0 -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+
+                # Refresh PATH for current session
+                $dotnetPath = "$env:ProgramFiles\dotnet"
+                if (Test-Path $dotnetPath) {
+                    $env:PATH = "$dotnetPath;$env:PATH"
+                    Write-Log "Added .NET to PATH: $dotnetPath"
+                }
+
+                # Verify installation
+                $newDotnetVersion = & dotnet --version 2>$null
+                Write-Log "Verification: .NET version after install: $newDotnetVersion"
+
+                if ($newDotnetVersion -and $newDotnetVersion -ge "9.0") {
+                    Write-Success ".NET $newDotnetVersion installed successfully!"
+                    Write-Log ".NET installation completed successfully"
+                } else {
+                    Write-Error-Log "Failed to verify .NET installation"
+                    throw ".NET installation verification failed"
+                }
+
+            } catch {
+                Write-Error-Log "Automatic .NET installation failed" $_
+                Write-Error "Automatic .NET installation failed. Please install manually from: https://dotnet.microsoft.com/download"
+                Write-Error "Error details: $($_.Exception.Message)"
+                throw "Automatic .NET installation failed"
+            }
         }
     } catch {
-        Write-Error-Log ".NET check failed" $_
-        Write-Error ".NET is not installed. Please install .NET 9.0 from: https://dotnet.microsoft.com/download"
-        throw "Dotnet not found"
+        Write-Error-Log ".NET check/installation failed" $_
+        if ($_.Exception.Message -notlike "*Automatic .NET installation failed*") {
+            Write-Error ".NET is not installed. Please install .NET 9.0 from: https://dotnet.microsoft.com/download"
+        }
+        throw "Dotnet not found or installation failed"
     }
 
 # Install FFmpeg if not skipped
