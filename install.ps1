@@ -69,11 +69,11 @@ try {
     if ((Test-Path $InstallPath) -or $existingService -or (Test-Path $existingExePath)) {
         $existingInstallation = $true
         Write-Log "Detected existing PlexPrerollManager installation"
-        Write-Host "🔄 EXISTING INSTALLATION DETECTED - PERFORMING UPGRADE" -ForegroundColor Yellow
-        Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Yellow
+        Write-Host "EXISTING INSTALLATION DETECTED - PERFORMING UPGRADE" -ForegroundColor Yellow
+        Write-Host "===================================================" -ForegroundColor Yellow
     } else {
-        Write-Host "✨ PLEX PREROLL MANAGER ONE-CLICK INSTALLER" -ForegroundColor Cyan
-        Write-Host "════════════════════════════════════════════" -ForegroundColor Cyan
+        Write-Host "PLEX PREROLL MANAGER ONE-CLICK INSTALLER" -ForegroundColor Cyan
+        Write-Host "=========================================" -ForegroundColor Cyan
     }
     
     Write-Host "Starting installation at $(Get-Date)" -ForegroundColor Gray
@@ -101,7 +101,7 @@ try {
     $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         Write-Error-Log "Script not running as administrator"
-        Write-Host "❌ This script must be run as Administrator. Please restart PowerShell as Administrator and try again." -ForegroundColor Red
+        Write-Host "ERROR: This script must be run as Administrator. Please restart PowerShell as Administrator and try again." -ForegroundColor Red
         throw "Administrator privileges required"
     }
     Write-Log "Administrator privileges confirmed"
@@ -109,42 +109,39 @@ try {
 # Function to write colored output
 function Write-Status {
     param($Message)
-    Write-Host "ℹ️  $Message" -ForegroundColor Blue
+    Write-Host "INFO: $Message" -ForegroundColor Blue
 }
 function Write-Success {
     param($Message)
-    Write-Host "✅ $Message" -ForegroundColor Green
+    Write-Host "SUCCESS: $Message" -ForegroundColor Green
 }
 function Write-Warning {
     param($Message)
-    Write-Host "⚠️  $Message" -ForegroundColor Yellow
+    Write-Host "WARNING: $Message" -ForegroundColor Yellow
 }
 function Write-Error {
     param($Message)
-    Write-Host "❌ $Message" -ForegroundColor Red
+    Write-Host "ERROR: $Message" -ForegroundColor Red
 }
 
 # Function to create section headers
 function Write-SectionHeader {
     param($Title)
     Write-Host ""
-    Write-Host "┌─────────────────────────────────────────────────────────────────────────────┐" -ForegroundColor Cyan
-    Write-Host "│ $Title" -ForegroundColor Cyan -NoNewline
-    $padding = 77 - $Title.Length
-    for ($i = 0; $i -lt $padding; $i++) { Write-Host " " -NoNewline }
-    Write-Host "│" -ForegroundColor Cyan
-    Write-Host "└─────────────────────────────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+    Write-Host "===============================================================================" -ForegroundColor Cyan
+    Write-Host " $Title" -ForegroundColor Cyan
+    Write-Host "===============================================================================" -ForegroundColor Cyan
 }
 
 # Function to create subsection headers
 function Write-SubSectionHeader {
     param($Title)
     Write-Host ""
-    Write-Host "─── $Title ──────────────────────────────────────────────────────────────" -ForegroundColor Magenta
+    Write-Host "--- $Title ---" -ForegroundColor Magenta
 }
 
     # Check .NET 9.0
-    Write-SectionHeader "🔧 CHECKING SYSTEM REQUIREMENTS"
+    Write-SectionHeader "CHECKING SYSTEM REQUIREMENTS"
     Write-SubSectionHeader ".NET 9.0 Runtime"
     Write-Log "Checking .NET 9.0 installation..."
     Write-Status "Checking .NET 9.0 installation..."
@@ -382,7 +379,7 @@ try {
 }
 
 # Download latest release from GitHub
-Write-SectionHeader "📦 DOWNLOADING APPLICATION"
+Write-SectionHeader "DOWNLOADING APPLICATION"
 Write-Status "Downloading PlexPrerollManager..."
 $repoUrl = "https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest"
 $downloadUrl = "https://github.com/JFLXCLOUD/PlexPrerollManager/releases/latest/download/PlexPrerollManager.zip"
@@ -822,7 +819,7 @@ try {
 
 # Build the application (only if needed)
 if (-not $skipBuild) {
-    Write-SectionHeader "🔨 BUILDING APPLICATION"
+    Write-SectionHeader "BUILDING APPLICATION"
     Write-Status "Building PlexPrerollManager..."
     try {
         Push-Location $InstallPath
@@ -883,7 +880,7 @@ if (-not (Test-Path $appsettingsPath) -or $Force) {
 }
 
 # Install Windows service
-Write-SectionHeader "⚙️  INSTALLING WINDOWS SERVICE"
+Write-SectionHeader "INSTALLING WINDOWS SERVICE"
 Write-Status "Installing Windows service..."
 try {
     # Determine executable path based on whether we built or downloaded pre-compiled
@@ -986,7 +983,7 @@ try {
 
 # Final instructions
 Write-Host ""
-Write-SectionHeader "🎉 INSTALLATION COMPLETE"
+Write-SectionHeader "INSTALLATION COMPLETE"
 if ($existingInstallation) {
     Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
     Write-Host "║                           UPGRADE COMPLETE!                                ║" -ForegroundColor Green
@@ -1003,38 +1000,38 @@ if ($existingInstallation) {
     Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
 }
 Write-Host ""
-Write-Host "🌐 Web Interface: http://localhost:8089" -ForegroundColor Cyan
-Write-Host "📁 Install Path: $InstallPath" -ForegroundColor Cyan
-Write-Host "💾 Data Path: $DataPath" -ForegroundColor Cyan
+Write-Host "Web Interface: http://localhost:8089" -ForegroundColor Cyan
+Write-Host "Install Path: $InstallPath" -ForegroundColor Cyan
+Write-Host "Data Path: $DataPath" -ForegroundColor Cyan
 
 if ($existingInstallation) {
     Write-Host ""
-    Write-Host "📋 UPGRADE NOTES:" -ForegroundColor Yellow
-    Write-Host "   ✅ Your configuration and data have been preserved"
-    Write-Host "   ✅ Existing preroll videos and categories are intact"
-    Write-Host "   ✅ Service has been restarted with the new version"
+    Write-Host "UPGRADE NOTES:" -ForegroundColor Yellow
+    Write-Host "   - Your configuration and data have been preserved"
+    Write-Host "   - Existing preroll videos and categories are intact"
+    Write-Host "   - Service has been restarted with the new version"
 }
 
 Write-Host ""
-Write-Host "🚀 GETTING STARTED:" -ForegroundColor Yellow
-Write-Host "   1️⃣  Open http://localhost:8089 in your browser"
+Write-Host "GETTING STARTED:" -ForegroundColor Yellow
+Write-Host "   1. Open http://localhost:8089 in your browser"
 if (-not $existingInstallation) {
-    Write-Host "   2️⃣  Configure your Plex server URL and token in the settings"
-    Write-Host "   3️⃣  Upload your first preroll videos!"
+    Write-Host "   2. Configure your Plex server URL and token in the settings"
+    Write-Host "   3. Upload your first preroll videos!"
 } else {
-    Write-Host "   2️⃣  Verify your existing configuration is still correct"
-    Write-Host "   3️⃣  Check that your preroll videos are still available"
+    Write-Host "   2. Verify your existing configuration is still correct"
+    Write-Host "   3. Check that your preroll videos are still available"
 }
 Write-Host ""
-Write-Host "❓ NEED HELP?" -ForegroundColor Yellow
-Write-Host "   📖 Check the README.md for detailed instructions"
-Write-Host "   📋 View logs in Windows Event Viewer"
-Write-Host "   🔗 Visit the GitHub repository for updates"
+Write-Host "NEED HELP?" -ForegroundColor Yellow
+Write-Host "   - Check the README.md for detailed instructions"
+Write-Host "   - View logs in Windows Event Viewer"
+Write-Host "   - Visit the GitHub repository for updates"
 Write-Host ""
-Write-Host "💡 PRO TIPS:" -ForegroundColor Magenta
-Write-Host "   📤 Use Bulk Upload to add multiple videos at once"
-Write-Host "   ⏰ Set up schedules for automatic preroll switching"
-Write-Host "   📊 Check the scheduling dashboard for advanced automation"
+Write-Host "PRO TIPS:" -ForegroundColor Magenta
+Write-Host "   - Use Bulk Upload to add multiple videos at once"
+Write-Host "   - Set up schedules for automatic preroll switching"
+Write-Host "   - Check the scheduling dashboard for advanced automation"
 Write-Host ""
 
 # Wait a moment for service to fully start
@@ -1067,11 +1064,11 @@ try {
     Write-Host "║                                                                          ║" -ForegroundColor Red
     Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Red
     Write-Host ""
-    Write-Host "❌ Error: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "📋 Log file: $logFile" -ForegroundColor Yellow
+    Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Log file: $logFile" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "🔍 Please check the log file for detailed error information." -ForegroundColor Yellow
-    Write-Host "🆘 For help, visit the GitHub repository or check the README.md" -ForegroundColor Yellow
+    Write-Host "Please check the log file for detailed error information." -ForegroundColor Yellow
+    Write-Host "For help, visit the GitHub repository or check the README.md" -ForegroundColor Yellow
 } finally {
     # Always show final status and wait for user
     Write-Host ""
