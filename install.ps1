@@ -349,34 +349,71 @@ try {
     }
 
     if (Test-Path $exePath) {
+        Write-Log "Executable found at: $exePath"
+
         # Stop existing service if running
         $existingService = Get-Service -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
         if ($existingService) {
+            Write-Log "Stopping existing service..."
             Stop-Service -Name "PlexPrerollManager" -Force -ErrorAction SilentlyContinue
-            & sc.exe delete PlexPrerollManager
+            Start-Sleep -Seconds 1
+            & sc.exe delete PlexPrerollManager 2>$null
             Start-Sleep -Seconds 2
         }
 
-        # Create new service
-        $servicePath = "`"$exePath --contentRoot $InstallPath`""
-        & sc.exe create PlexPrerollManager binPath= $servicePath start= auto | Out-Null
+        # Create new service with proper arguments
+        # For self-contained .NET apps, we need different service configuration
+        if ($skipBuild) {
+            # Pre-compiled release - likely self-contained
+            $servicePath = "`"$exePath`""
+            Write-Log "Creating service for pre-compiled app: $servicePath"
+        } else {
+            # Built from source - may need content root
+            $servicePath = "`"$exePath`" --contentRoot `"$InstallPath`""
+            Write-Log "Creating service for built app: $servicePath"
+        }
+
+        $createResult = & sc.exe create PlexPrerollManager binPath= $servicePath start= auto 2>&1
+        Write-Log "Service creation result: $createResult"
+
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Windows service created successfully"
+
+            # Try to start the service with better error handling
+            Write-Log "Attempting to start service..."
+            try {
+                Start-Service -Name "PlexPrerollManager" -ErrorAction Stop
+                Write-Success "Windows service started successfully"
+
+                # Verify service is actually running
+                Start-Sleep -Seconds 2
+                $serviceStatus = Get-Service -Name "PlexPrerollManager"
+                if ($serviceStatus.Status -eq "Running") {
+                    Write-Success "Service is confirmed running"
+                } else {
+                    Write-Warning "Service was created but may not be running properly. Status: $($serviceStatus.Status)"
+                }
+            } catch {
+                Write-Error-Log "Failed to start service" $_
+                Write-Warning "Service was created but failed to start. This is common and you can start it manually later."
+                Write-Warning "To start manually: Run PowerShell as Administrator and execute: Start-Service PlexPrerollManager"
+                Write-Warning "Or use: net start PlexPrerollManager"
+            }
         } else {
+            Write-Error-Log "Failed to create service" "Exit code: $LASTEXITCODE, Result: $createResult"
             Write-Error "Failed to create service. Exit code: $LASTEXITCODE"
             throw "Failed to create service"
         }
-
-        # Start the service
-        Start-Service -Name "PlexPrerollManager"
-        Write-Success "Windows service started successfully"
     } else {
+        Write-Error-Log "Executable not found" "Path: $exePath"
         Write-Error "Could not find executable at: $exePath"
-        exit 1
+        throw "Executable not found"
     }
 } catch {
+    Write-Error-Log "Service installation failed" $_
     Write-Error "Failed to install Windows service: $_"
     Write-Warning "You can still run the application manually: $exePath"
+    Write-Warning "Manual start command: & `"$exePath`""
 }
 
 # Create desktop shortcut
