@@ -298,8 +298,12 @@ try {
             Write-Success "Application files downloaded and extracted successfully"
 
             # Check if this is a compiled release (contains published binaries) or source code
+            # First check directly in install path
             $exePath = Join-Path $InstallPath "PlexPrerollManager.exe"
             $projectFile = Join-Path $InstallPath "PlexPrerollManager.csproj"
+
+            Write-Log "Checking for executable at: $exePath"
+            Write-Log "Checking for project file at: $projectFile"
 
             if (Test-Path $exePath) {
                 Write-Log "Detected compiled release - skipping build step"
@@ -310,8 +314,48 @@ try {
                 Write-Status "Source code detected - will build application"
                 $skipBuild = $false
             } else {
-                Write-Log "Could not determine release type"
-                throw "Downloaded release does not contain expected files"
+                # Check if files are in a subdirectory (common in GitHub releases)
+                Write-Log "Files not found in root directory, checking subdirectories..."
+                $subdirs = Get-ChildItem -Path $InstallPath -Directory -ErrorAction SilentlyContinue
+                $foundFiles = $false
+
+                foreach ($subdir in $subdirs) {
+                    $subdirExePath = Join-Path $subdir.FullName "PlexPrerollManager.exe"
+                    $subdirProjectPath = Join-Path $subdir.FullName "PlexPrerollManager.csproj"
+
+                    Write-Log "Checking subdirectory: $($subdir.FullName)"
+
+                    if (Test-Path $subdirExePath) {
+                        Write-Log "Found executable in subdirectory: $subdirExePath"
+                        # Move files from subdirectory to root
+                        Write-Status "Moving files from subdirectory to root..."
+                        Get-ChildItem -Path $subdir.FullName | Move-Item -Destination $InstallPath -Force
+                        Remove-Item $subdir.FullName -Force
+                        $skipBuild = $true
+                        $foundFiles = $true
+                        Write-Log "Files moved successfully, detected compiled release"
+                        break
+                    } elseif (Test-Path $subdirProjectPath) {
+                        Write-Log "Found project file in subdirectory: $subdirProjectPath"
+                        # Move files from subdirectory to root
+                        Write-Status "Moving files from subdirectory to root..."
+                        Get-ChildItem -Path $subdir.FullName | Move-Item -Destination $InstallPath -Force
+                        Remove-Item $subdir.FullName -Force
+                        $skipBuild = $false
+                        $foundFiles = $true
+                        Write-Log "Files moved successfully, detected source code release"
+                        break
+                    }
+                }
+
+                if (-not $foundFiles) {
+                    Write-Log "Could not find expected files in any location"
+                    Write-Log "Contents of $InstallPath :"
+                    Get-ChildItem -Path $InstallPath -Recurse | ForEach-Object {
+                        Write-Log "  $($_.FullName)"
+                    }
+                    throw "Downloaded release does not contain expected files (PlexPrerollManager.exe or PlexPrerollManager.csproj)"
+                }
             }
         } else {
             throw "Could not find ZIP file in latest release"
@@ -323,20 +367,44 @@ try {
         # Fallback: Copy current files to installation directory (for development/testing)
         Write-Status "Copying application files..."
         $currentPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+        Write-Log "Script invocation path: $($MyInvocation.MyCommand.Path)"
+        Write-Log "Determined current path: $currentPath"
+
+        if (-not $currentPath) {
+            Write-Log "Current path is null, trying alternative methods..."
+            # Try alternative methods to get the script directory
+            $currentPath = [System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Path)
+            Write-Log "Alternative current path: $currentPath"
+        }
+
         if ($currentPath -and (Test-Path $currentPath)) {
             Write-Status "Copying from: $currentPath"
             Write-Status "Copying to: $InstallPath"
+            Write-Log "Starting file copy from $currentPath to $InstallPath"
 
-            # Get all files and directories except excluded ones
-            $items = Get-ChildItem -Path $currentPath -Exclude @("*.git*", "*node_modules*", "*.zip", "*.sha256", "release", "PlexPrerollManager-v*")
-            foreach ($item in $items) {
-                if ($item.Name -ne "install.ps1") {  # Don't copy the installer script itself
-                    Copy-Item $item.FullName -Destination $InstallPath -Recurse -Force
+            try {
+                # Get all files and directories except excluded ones
+                $items = Get-ChildItem -Path $currentPath -Exclude @("*.git*", "*node_modules*", "*.zip", "*.sha256", "release", "PlexPrerollManager-v*") -ErrorAction Stop
+                Write-Log "Found $($items.Count) items to copy"
+
+                foreach ($item in $items) {
+                    if ($item.Name -ne "install.ps1") {  # Don't copy the installer script itself
+                        Write-Log "Copying: $($item.FullName)"
+                        Copy-Item $item.FullName -Destination $InstallPath -Recurse -Force -ErrorAction Stop
+                    }
                 }
+                Write-Success "Application files copied successfully"
+                $skipBuild = $false  # Local files are source code, so we need to build
+                Write-Log "File copy completed successfully"
+            } catch {
+                Write-Error-Log "File copy failed" $_
+                throw "Failed to copy application files: $_"
             }
-            Write-Success "Application files copied successfully"
-            $skipBuild = $false  # Local files are source code, so we need to build
         } else {
+            Write-Error-Log "Could not determine script path" "CurrentPath: $currentPath, InvocationPath: $($MyInvocation.MyCommand.Path)"
+            Write-Error "Could not determine script path for local copy. Current path: $currentPath"
+            Write-Warning "This may happen when running the script remotely. Please try downloading and running the installer locally."
             throw "Could not determine script path for local copy"
         }
     }
