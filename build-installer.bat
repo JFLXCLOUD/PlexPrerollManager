@@ -2,16 +2,15 @@
 REM PlexPrerollManager Installer Builder
 REM This script builds a professional Windows installer using Inno Setup
 
-REM Prevent CMD window from closing on error
-if "%~1"=="debug" goto :main
-cmd /c "%~f0" debug %*
-goto :eof
+REM Change to the script's directory
+cd /d "%~dp0"
 
-:main
 echo.
 echo ========================================
 echo  PlexPrerollManager Installer Builder
 echo ========================================
+echo.
+echo Current directory: %CD%
 echo.
 
 REM Check if Inno Setup is installed
@@ -163,5 +162,7 @@ if exist "installer\PlexPrerollManager-Setup-2.0.0.exe" (
 )
 
 echo.
-echo Press any key to exit...
+echo ========================================
+echo  Script completed. Press any key to exit...
+echo ========================================
 pause >nul
