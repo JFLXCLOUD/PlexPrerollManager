@@ -20,7 +20,7 @@
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{12345678-1234-1234-1234-123456789ABC}
+AppId={{9EFFC99E-FEA5-416C-A24E-85A186EDD645}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -30,13 +30,18 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
 DisableProgramGroupPage=yes
-LicenseFile=LICENSE
+//LicenseFile=LICENSE
 OutputDir=installer
 OutputBaseFilename=PlexPrerollManager-Setup-{#MyAppVersion}-{#BuildType}
 SetupIconFile=icon.ico
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin
+; Upgrade handling
+AppVerName={#MyAppName} {#MyAppVersion}
+VersionInfoVersion={#MyAppVersion}
+UninstallDisplayName={#MyAppName}
+UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -68,6 +73,11 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 var
   ServicePage: TInputOptionWizardPage;
 
+function GetInstallDate(Param: String): String;
+begin
+  Result := GetDateTimeString('yyyy-mm-dd hh:nn:ss', #0, #0);
+end;
+
 function IsDotNetInstalled(): Boolean;
 var
   ResultCode: Integer;
@@ -91,6 +101,49 @@ begin
   ServicePage.Add('Run manually (advanced users)');
 
   ServicePage.Values[0] := True;
+end;
+
+function IsUpgrade(): Boolean;
+var
+  sPrevPath: String;
+begin
+  sPrevPath := WizardForm.PrevAppDir;
+  Result := (sPrevPath <> '');
+end;
+
+function InitializeSetup(): Boolean;
+var
+  ResultCode: Integer;
+  UninstallString: String;
+  ExistingVersion: String;
+begin
+  // Check if application is already installed (multiple detection methods)
+  if RegQueryStringValue(HKLM, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppName}_is1', 'UninstallString', UninstallString) or
+     RegQueryStringValue(HKLM, 'Software\{#MyAppName}', 'InstallPath', UninstallString) then
+  begin
+    // Get existing version if available
+    RegQueryStringValue(HKLM, 'Software\{#MyAppName}', 'Version', ExistingVersion);
+
+    if MsgBox('{#MyAppName} is already installed on this system.' +
+              IfThen(ExistingVersion <> '', #13#10 + 'Current version: ' + ExistingVersion, '') + #13#10 +
+              'New version: {#MyAppVersion}' + #13#10 + #13#10 +
+              'Would you like to upgrade to the new version?' + #13#10 +
+              'Your configuration and data will be preserved.' + #13#10 + #13#10 +
+              'Click Yes to upgrade (recommended),' + #13#10 +
+              'Click No to install alongside existing version.',
+              mbConfirmation, MB_YESNO) = IDYES then
+    begin
+      // Stop existing service before upgrade
+      Exec(ExpandConstant('{sys}\sc.exe'), 'stop PlexPrerollManager', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+      // Note: We don't automatically uninstall to preserve user data
+      // The new installation will overwrite files but preserve data directories
+      MsgBox('Existing service stopped. Proceeding with upgrade installation.' + #13#10 +
+             'Your configuration and data will be preserved.', mbInformation, MB_OK);
+    end;
+  end;
+
+  Result := True;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -118,17 +171,26 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
+  UpgradeMessage: String;
 begin
   if CurStep = ssPostInstall then
   begin
+    // Determine if this is an upgrade
+    if IsUpgrade() then
+      UpgradeMessage := ' upgraded'
+    else
+      UpgradeMessage := ' installed';
+
     if ServicePage.Values[0] then
     begin
       // Install as service
       Exec(ExpandConstant('{sys}\sc.exe'), 'create PlexPrerollManager binPath= "' + ExpandConstant('{app}\{#MyAppExeName}') + '" start= auto', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
       Exec(ExpandConstant('{sys}\sc.exe'), 'start PlexPrerollManager', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-      MsgBox('PlexPrerollManager has been installed as a Windows service and started automatically.', mbInformation, MB_OK);
+      MsgBox('PlexPrerollManager has been' + UpgradeMessage + ' as a Windows service and started automatically.' + #13#10 +
+             'You can access it at: http://localhost:8089', mbInformation, MB_OK);
     end else begin
-      MsgBox('PlexPrerollManager has been installed. You can start it manually by running the executable.', mbInformation, MB_OK);
+      MsgBox('PlexPrerollManager has been' + UpgradeMessage + '.' + #13#10 +
+             'You can start it manually by running the executable or access it at: http://localhost:8089', mbInformation, MB_OK);
     end;
   end;
 end;
@@ -144,6 +206,12 @@ begin
     Exec(ExpandConstant('{sys}\sc.exe'), 'delete PlexPrerollManager', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 end;
+
+[Registry]
+; Store installation information for upgrade detection
+Root: HKLM; Subkey: "Software\{#MyAppName}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "Software\{#MyAppName}"; ValueType: string; ValueName: "Version"; ValueData: "{#MyAppVersion}"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "Software\{#MyAppName}"; ValueType: string; ValueName: "InstallDate"; ValueData: "{code:GetInstallDate}"; Flags: uninsdeletekey
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\*"
