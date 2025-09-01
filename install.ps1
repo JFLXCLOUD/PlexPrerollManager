@@ -51,10 +51,18 @@ try {
 if (-not $dotnetFound -or -not $dotnetVersion -or $dotnetVersion -lt "9.0") {
     Write-Host "✗ .NET 9.0 not found or too old (found: $dotnetVersion)" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Please install .NET 9.0 from:" -ForegroundColor Yellow
+    Write-Host "PLEXPREROLLMANAGER REQUIRES .NET 9.0 RUNTIME" -ForegroundColor Yellow
+    Write-Host "This application is built with .NET 9.0 and cannot run without it." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Download and install .NET 9.0 from:" -ForegroundColor Cyan
     Write-Host "https://dotnet.microsoft.com/download/dotnet/9.0" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "After installation, restart PowerShell and run this installer again." -ForegroundColor Yellow
+    Write-Host "Choose the 'ASP.NET Core Runtime 9.0.x' download for Windows." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "After installation:" -ForegroundColor Yellow
+    Write-Host "1. Restart PowerShell (or open a new PowerShell window)" -ForegroundColor Yellow
+    Write-Host "2. Run this installer again" -ForegroundColor Yellow
+    Write-Host ""
     exit 1
 }
 
