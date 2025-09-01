@@ -38,6 +38,7 @@ Name: "service"; Description: "Install as Windows service (recommended)"; GroupD
 
 [Files]
 ; Application executable and dependencies
+; NOTE: Run build-installer.bat or build-installer-gui.bat first to create the publish directory
 Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Web interface files

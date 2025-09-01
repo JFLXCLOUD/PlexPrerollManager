@@ -26,6 +26,33 @@ if not exist "publish" (
     exit /b 1
 )
 
+REM Check if publish directory has files
+dir /b "publish" >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: publish directory is empty!
+    echo.
+    echo The publish directory exists but contains no files.
+    echo Please run build-installer.bat again to rebuild the application.
+    echo.
+    echo Command: build-installer.bat
+    echo.
+    pause
+    exit /b 1
+)
+
+REM Check for the main executable
+if not exist "publish\PlexPrerollManager.exe" (
+    echo ERROR: PlexPrerollManager.exe not found in publish directory!
+    echo.
+    echo The publish directory exists but doesn't contain the expected executable.
+    echo Please check the build output for errors and run build-installer.bat again.
+    echo.
+    echo Command: build-installer.bat
+    echo.
+    pause
+    exit /b 1
+)
+
 REM Check if required files exist
 if not exist "dashboard.html" (
     echo ERROR: dashboard.html not found!
@@ -47,19 +74,28 @@ if not exist "appsettings.json" (
 
 echo All required files found!
 echo.
+echo Contents of publish directory:
+dir /b "publish"
+echo.
 echo ========================================
 echo  Ready for Inno Setup GUI
 echo ========================================
 echo.
-echo Now you can:
+echo IMPORTANT: Make sure Inno Setup Compiler is running from this directory!
+echo.
+echo Steps to create the installer:
 echo 1. Open Inno Setup Compiler
-echo 2. Open this file: installer.iss
-echo 3. Click Compile
+echo 2. File -> Open -> Select 'installer.iss' from this folder
+echo 3. Click 'Compile' (F9)
+echo 4. The installer will be created in 'installer\' folder
 echo.
 echo The installer will include:
-echo - PlexPrerollManager.exe (from publish\)
-echo - dashboard.html
-echo - scheduling-dashboard.html
-echo - appsettings.json
+echo - PlexPrerollManager.exe and dependencies (from publish\)
+echo - dashboard.html (web interface)
+echo - scheduling-dashboard.html (scheduling interface)
+echo - appsettings.json (configuration)
+echo.
+echo If you get file not found errors, make sure you're opening
+echo installer.iss from the correct directory (this project folder).
 echo.
 pause
