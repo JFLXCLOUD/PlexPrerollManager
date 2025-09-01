@@ -7,6 +7,15 @@
 #define MyAppURL "https://github.com/JFLXCLOUD/PlexPrerollManager"
 #define MyAppExeName "PlexPrerollManager.exe"
 
+; Build type detection
+#ifdef FrameworkDependent
+  #define BuildType "Framework-Dependent"
+  #define PublishDir "publish-framework"
+#else
+  #define BuildType "Self-Contained"
+  #define PublishDir "publish"
+#endif
+
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
@@ -23,7 +32,7 @@ DefaultDirName={pf}\{#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=LICENSE
 OutputDir=installer
-OutputBaseFilename=PlexPrerollManager-Setup-{#MyAppVersion}
+OutputBaseFilename=PlexPrerollManager-Setup-{#MyAppVersion}-{#BuildType}
 SetupIconFile=icon.ico
 Compression=lzma
 SolidCompression=yes
@@ -39,7 +48,7 @@ Name: "service"; Description: "Install as Windows service (recommended)"; GroupD
 [Files]
 ; Application executable and dependencies
 ; NOTE: Run build-installer.bat or build-installer-gui.bat first to create the publish directory
-Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Web interface files
 Source: "dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
@@ -59,6 +68,18 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 var
   ServicePage: TInputOptionWizardPage;
 
+function IsDotNetInstalled(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  // Check if .NET 9.0 or later is installed
+  Result := Exec(ExpandConstant('{sys}\cmd.exe'), '/c dotnet --version 2>nul | findstr "^9\." >nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if ResultCode = 0 then
+    Result := True
+  else
+    Result := False;
+end;
+
 procedure InitializeWizard;
 begin
   ServicePage := CreateInputOptionPage(wpSelectTasks,
@@ -70,6 +91,28 @@ begin
   ServicePage.Add('Run manually (advanced users)');
 
   ServicePage.Values[0] := True;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+
+  if CurPageID = wpReady then
+  begin
+    // Check .NET installation before proceeding
+    if not IsDotNetInstalled() then
+    begin
+      if MsgBox('Warning: .NET 9.0 or later was not detected on this system.' + #13#10 +
+                'PlexPrerollManager requires .NET 9.0 to run.' + #13#10 + #13#10 +
+                'Would you like to continue with the installation anyway?' + #13#10 +
+                '(You will need to install .NET 9.0 separately)',
+                mbConfirmation, MB_YESNO) = IDNO then
+      begin
+        Result := False;
+        Exit;
+      end;
+    end;
+  end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
