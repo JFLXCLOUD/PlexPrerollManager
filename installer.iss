@@ -116,6 +116,7 @@ var
   ResultCode: Integer;
   UninstallString: String;
   ExistingVersion: String;
+  MessageText: String;
 begin
   // Check if application is already installed (multiple detection methods)
   if RegQueryStringValue(HKLM, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppName}_is1', 'UninstallString', UninstallString) or
@@ -124,14 +125,17 @@ begin
     // Get existing version if available
     RegQueryStringValue(HKLM, 'Software\{#MyAppName}', 'Version', ExistingVersion);
 
-    if MsgBox('{#MyAppName} is already installed on this system.' +
-              IfThen(ExistingVersion <> '', #13#10 + 'Current version: ' + ExistingVersion, '') + #13#10 +
-              'New version: {#MyAppVersion}' + #13#10 + #13#10 +
-              'Would you like to upgrade to the new version?' + #13#10 +
-              'Your configuration and data will be preserved.' + #13#10 + #13#10 +
-              'Click Yes to upgrade (recommended),' + #13#10 +
-              'Click No to install alongside existing version.',
-              mbConfirmation, MB_YESNO) = IDYES then
+    // Build message with version info
+    MessageText := '{#MyAppName} is already installed on this system.';
+    if ExistingVersion <> '' then
+      MessageText := MessageText + #13#10 + 'Current version: ' + ExistingVersion;
+    MessageText := MessageText + #13#10 + 'New version: {#MyAppVersion}' + #13#10 + #13#10 +
+                   'Would you like to upgrade to the new version?' + #13#10 +
+                   'Your configuration and data will be preserved.' + #13#10 + #13#10 +
+                   'Click Yes to upgrade (recommended),' + #13#10 +
+                   'Click No to install alongside existing version.';
+
+    if MsgBox(MessageText, mbConfirmation, MB_YESNO) = IDYES then
     begin
       // Stop existing service before upgrade
       Exec(ExpandConstant('{sys}\sc.exe'), 'stop PlexPrerollManager', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
