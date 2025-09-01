@@ -21,8 +21,7 @@ $essentialFiles = @(
     "Program.cs",
     "dashboard.html",
     "scheduling-dashboard.html",
-    "appsettings.json",
-    ".gitignore"
+    "appsettings.json"
 )
 
 # Create release directory
