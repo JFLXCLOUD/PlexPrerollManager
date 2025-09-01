@@ -55,20 +55,29 @@ if (-not (Test-Path $configPath)) {
     $prerollsPath = "$DataPath\Prerolls"
     $configFilePath = "$DataPath\config.json"
 
-    $jsonLines = @(
-        "{",
-        "  `"Plex`": {",
-        "    `"Url`": `"$plexUrl`"",
-        "    `"Token`": `"`"",
-        "  },",
-        "  `"PrerollManager`": {",
-        "    `"PrerollsPath`": `"$prerollsPath`"",
-        "    `"ConfigPath`": `"$configFilePath`"",
-        "  }",
-        "}"
-    )
+    # Create JSON content line by line to avoid parsing issues
+    $line1 = '{'
+    $line2 = '  "Plex": {'
+    $line3 = '    "Url": "' + $plexUrl + '",'
+    $line4 = '    "Token": ""'
+    $line5 = '  },'
+    $line6 = '  "PrerollManager": {'
+    $line7 = '    "PrerollsPath": "' + $prerollsPath + '",'
+    $line8 = '    "ConfigPath": "' + $configFilePath + '"'
+    $line9 = '  }'
+    $line10 = '}'
 
-    $jsonLines | Out-File -FilePath $configPath -Encoding UTF8
+    # Write each line separately
+    $line1 | Out-File -FilePath $configPath -Encoding UTF8
+    $line2 | Out-File -FilePath $configPath -Append -Encoding UTF8
+    $line3 | Out-File -FilePath $configPath -Append -Encoding UTF8
+    $line4 | Out-File -FilePath $configPath -Append -Encoding UTF8
+    $line5 | Out-File -FilePath $configPath -Append -Encoding UTF8
+    $line6 | Out-File -FilePath $configPath -Append -Encoding UTF8
+    $line7 | Out-File -FilePath $configPath -Append -Encoding UTF8
+    $line8 | Out-File -FilePath $configPath -Append -Encoding UTF8
+    $line9 | Out-File -FilePath $configPath -Append -Encoding UTF8
+    $line10 | Out-File -FilePath $configPath -Append -Encoding UTF8
 }
 
 # Install service
