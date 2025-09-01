@@ -66,6 +66,12 @@ Run this ultra-simple one-liner in an elevated PowerShell terminal:
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1" -OutFile "$env:TEMP\install.ps1"; & "$env:TEMP\install.ps1"
 ```
 
+**One-liner with automatic .NET installation:**
+```powershell
+# Downloads installer and installs .NET 9.0 automatically
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1" -OutFile "$env:TEMP\install.ps1"; & "$env:TEMP\install.ps1" -InstallDotNet
+```
+
 **Alternative batch file approach:**
 ```batch
 # Download install-simple.bat and run it (true one-liner!)

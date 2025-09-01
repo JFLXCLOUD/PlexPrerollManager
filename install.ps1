@@ -3,7 +3,8 @@
 
 param(
     [string]$InstallPath = "$env:ProgramFiles\PlexPrerollManager",
-    [string]$DataPath = "$env:ProgramData\PlexPrerollManager"
+    [string]$DataPath = "$env:ProgramData\PlexPrerollManager",
+    [switch]$InstallDotNet
 )
 
 $ErrorActionPreference = "Stop"
@@ -49,21 +50,88 @@ try {
 }
 
 if (-not $dotnetFound -or -not $dotnetVersion -or $dotnetVersion -lt "9.0") {
-    Write-Host "✗ .NET 9.0 not found or too old (found: $dotnetVersion)" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "PLEXPREROLLMANAGER REQUIRES .NET 9.0 RUNTIME" -ForegroundColor Yellow
-    Write-Host "This application is built with .NET 9.0 and cannot run without it." -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Download and install .NET 9.0 from:" -ForegroundColor Cyan
-    Write-Host "https://dotnet.microsoft.com/download/dotnet/9.0" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Choose the 'ASP.NET Core Runtime 9.0.x' download for Windows." -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "After installation:" -ForegroundColor Yellow
-    Write-Host "1. Restart PowerShell (or open a new PowerShell window)" -ForegroundColor Yellow
-    Write-Host "2. Run this installer again" -ForegroundColor Yellow
-    Write-Host ""
-    exit 1
+    if ($InstallDotNet) {
+        Write-Host "🔄 .NET 9.0 not found, installing automatically..." -ForegroundColor Yellow
+        Write-Host ""
+
+        try {
+            # Download and run the dotnet-install script
+            $installScriptUrl = "https://dot.net/v1/dotnet-install.ps1"
+            Write-Host "📥 Downloading dotnet-install script..." -ForegroundColor Gray
+
+            $installScript = Invoke-WebRequest -Uri $installScriptUrl -UseBasicParsing
+            $scriptBlock = [scriptblock]::Create($installScript.Content)
+
+            Write-Host "⚙️ Installing .NET 9.0 runtime..." -ForegroundColor Gray
+            Write-Host "(This may take a few minutes)" -ForegroundColor Gray
+
+            # Install .NET 9.0 runtime (not SDK) to Program Files
+            & $scriptBlock -Channel 9.0 -Runtime aspnetcore -InstallDir "$env:ProgramFiles\dotnet" -NoPath
+
+            # Refresh PATH for current session
+            $dotnetPaths = @(
+                "$env:ProgramFiles\dotnet",
+                "$env:ProgramFiles\dotnet\dotnet.exe"
+            )
+
+            foreach ($dotnetPath in $dotnetPaths) {
+                if (Test-Path $dotnetPath) {
+                    if ($env:PATH -notlike "*$dotnetPath*") {
+                        $env:PATH = "$dotnetPath;$env:PATH"
+                        Write-Host "✅ Added .NET to PATH: $dotnetPath" -ForegroundColor Green
+                    }
+                }
+            }
+
+            # Verify installation
+            Write-Host "🔍 Verifying installation..." -ForegroundColor Gray
+            $newDotnetVersion = $null
+            try {
+                $newDotnetVersion = & dotnet --version 2>$null
+            } catch {
+                # Try direct path
+                try {
+                    $newDotnetVersion = & "$env:ProgramFiles\dotnet\dotnet.exe" --version 2>$null
+                } catch {
+                    # Ignore
+                }
+            }
+
+            if ($newDotnetVersion -and $newDotnetVersion -ge "9.0") {
+                Write-Host "✅ .NET $newDotnetVersion installed successfully!" -ForegroundColor Green
+                Write-Host ""
+            } else {
+                Write-Host "⚠️ .NET installation completed but verification failed" -ForegroundColor Yellow
+                Write-Host "Installation may have succeeded, continuing..." -ForegroundColor Yellow
+                Write-Host ""
+            }
+
+        } catch {
+            Write-Host "❌ Automatic .NET installation failed" -ForegroundColor Red
+            Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "Please install .NET 9.0 manually from:" -ForegroundColor Yellow
+            Write-Host "https://dotnet.microsoft.com/download/dotnet/9.0" -ForegroundColor Cyan
+            Write-Host ""
+            exit 1
+        }
+    } else {
+        Write-Host "✗ .NET 9.0 not found or too old (found: $dotnetVersion)" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "PLEXPREROLLMANAGER REQUIRES .NET 9.0 RUNTIME" -ForegroundColor Yellow
+        Write-Host "This application is built with .NET 9.0 and cannot run without it." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "OPTIONS:" -ForegroundColor Cyan
+        Write-Host "1. Install automatically: Add -InstallDotNet parameter" -ForegroundColor White
+        Write-Host "   Example: .\install.ps1 -InstallDotNet" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "2. Install manually from:" -ForegroundColor White
+        Write-Host "   https://dotnet.microsoft.com/download/dotnet/9.0" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Choose the 'ASP.NET Core Runtime 9.0.x' download for Windows." -ForegroundColor Gray
+        Write-Host ""
+        exit 1
+    }
 }
 
 Write-Host "✓ .NET $dotnetVersion found" -ForegroundColor Green
