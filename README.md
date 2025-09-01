@@ -110,25 +110,6 @@ If you want to build from source:
 | **Source Code** + `install.bat` | ✅ Yes | ✅ Auto | **Development** |
 | **Source Code** + `install-simple.bat` | ❌ No | ❌ Manual | **Development** |
 
-### Creating Releases
-
-To create a new release for distribution:
-
-1. **Update version numbers** in project files if needed
-2. **Run the release preparation script**:
-   ```batch
-   prepare-release.ps1
-   ```
-3. **Test the generated release** locally
-4. **Create a GitHub release** with the generated ZIP files from the `release/` folder
-5. **Upload the release assets** and publish
-
-The `prepare-release.ps1` script will:
-- Build the application for distribution
-- Create optimized release packages
-- Generate checksums for verification
-- Prepare all necessary files for the release
-
 ## Usage
 
 ### Starting the Application
