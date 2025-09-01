@@ -57,59 +57,77 @@ choco install ffmpeg
 ```
 
 
-## Quick Installation (One-Liner)
+## Installation
 
-### Windows PowerShell (Recommended)
-Run this ultra-simple one-liner in an elevated PowerShell terminal:
-```powershell
-# Download and run the simplified installer (73 lines, super fast!)
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1" -OutFile "$env:TEMP\install.ps1"; & "$env:TEMP\install.ps1"
-```
+### Option 1: Download Release (Recommended)
 
-**One-liner with automatic .NET installation:**
-```powershell
-# Downloads installer and installs .NET 9.0 automatically
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1" -OutFile "$env:TEMP\install.ps1"; & "$env:TEMP\install.ps1" -InstallDotNet
-```
+1. **Download the latest release** from [GitHub Releases](https://github.com/JFLXCLOUD/PlexPrerollManager/releases)
+2. **Extract** the ZIP file to a folder on your computer
+3. **Run the installer** as Administrator:
+   ```batch
+   install.bat          # Full installation with service setup
+   ```
+4. **Open** http://localhost:8089 in your browser
 
-**Alternative batch file approach:**
-```batch
-# Download install-simple.bat and run it (true one-liner!)
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install-simple.bat' -OutFile '$env:TEMP\install-simple.bat'; & '$env:TEMP\install-simple.bat'"
-```
+### Option 2: Local Development Setup
 
-**Why this approach?** The simplified installer is now only 73 lines (down from 966!) and installs everything automatically in seconds.
+If you want to build from source:
 
-This will:
-- ✅ Download the ultra-simple installer (73 lines)
-- ✅ Check .NET 9.0 automatically
-- ✅ Stop any existing service
-- ✅ Create directories and copy files
-- ✅ Build the application
-- ✅ Create default configuration
-- ✅ Install and start Windows service
-- ✅ Provide instant feedback
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/JFLXCLOUD/PlexPrerollManager.git
+   cd PlexPrerollManager
+   ```
 
-### Manual Installation
+2. **Run the installer** as Administrator:
+   ```batch
+   install.bat          # Full installation with service setup
+   install-simple.bat   # Quick setup (no service)
+   ```
 
-1. **Clone or download** the project files
-2. **Navigate** to the project directory
-3. **Run the installation script**:
-    ```bash
-    install.bat                    # Full service installation (Administrator)
-    install-simple.bat            # Quick setup (no admin required)
-    ./install-preroll-manager.ps1  # PowerShell service installer
-    ./install.ps1                  # One-click PowerShell installer
-    ```
+3. **Open** http://localhost:8089 in your browser
 
-### Installation Options
+### From Source Code
 
-| Method | Lines | Admin Required | Service Setup | FFmpeg Install | Best For |
-|--------|-------|---------------|---------------|----------------|----------|
-| `install-simple.bat` | 3 | ✅ Yes | ✅ Auto | ❌ Manual | **One-Click** |
-| `install.ps1` | 73 | ✅ Yes | ✅ Auto | ❌ Manual | **Simple** |
-| `install.bat` | 274 | ✅ Yes | ✅ Auto | ❌ Manual | **Full Control** |
-| Manual | N/A | ❌ No | ❌ Manual | ❌ Manual | **Development** |
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/JFLXCLOUD/PlexPrerollManager.git
+   cd PlexPrerollManager
+   ```
+
+2. **Run the installer** (Administrator required for service installation):
+   ```batch
+   install.bat                    # Full service installation
+   install-simple.bat            # Quick setup without service
+   ```
+
+### Installation Methods
+
+| Method | Admin Required | Service Setup | Best For |
+|--------|---------------|---------------|----------|
+| **Release ZIP** + `install.bat` | ✅ Yes | ✅ Auto | **Production Use** |
+| **Release ZIP** + `install-simple.bat` | ❌ No | ❌ Manual | **Testing** |
+| **Source Code** + `install.bat` | ✅ Yes | ✅ Auto | **Development** |
+| **Source Code** + `install-simple.bat` | ❌ No | ❌ Manual | **Development** |
+
+### Creating Releases
+
+To create a new release for distribution:
+
+1. **Update version numbers** in project files if needed
+2. **Run the release preparation script**:
+   ```batch
+   prepare-release.ps1
+   ```
+3. **Test the generated release** locally
+4. **Create a GitHub release** with the generated ZIP files from the `release/` folder
+5. **Upload the release assets** and publish
+
+The `prepare-release.ps1` script will:
+- Build the application for distribution
+- Create optimized release packages
+- Generate checksums for verification
+- Prepare all necessary files for the release
 
 ## Usage
 
