@@ -461,6 +461,53 @@ namespace PlexPrerollManager
                 await ctx.Response.WriteAsync(JsonSerializer.Serialize(updateInfo));
             });
 
+            // ===== Plex Configuration API Endpoints =====
+
+            app.MapGet("/api/plex/config", async ctx =>
+            {
+                var plexService = ctx.RequestServices.GetRequiredService<IPlexService>();
+                var config = await plexService.GetPlexConfigAsync();
+
+                ctx.Response.ContentType = "application/json";
+                await ctx.Response.WriteAsync(JsonSerializer.Serialize(config));
+            });
+
+            app.MapPost("/api/plex/config", async ctx =>
+            {
+                try
+                {
+                    using var sr = new StreamReader(ctx.Request.Body);
+                    var body = await sr.ReadToEndAsync();
+                    var config = JsonSerializer.Deserialize<PlexConfig>(body);
+
+                    if (config == null)
+                    {
+                        ctx.Response.StatusCode = 400;
+                        await ctx.Response.WriteAsync("{\"error\":\"Invalid configuration data\"}");
+                        return;
+                    }
+
+                    var plexService = ctx.RequestServices.GetRequiredService<IPlexService>();
+                    var success = await plexService.UpdatePlexConfigAsync(config);
+
+                    if (success)
+                    {
+                        ctx.Response.ContentType = "application/json";
+                        await ctx.Response.WriteAsync("{\"message\":\"Plex configuration updated successfully\"}");
+                    }
+                    else
+                    {
+                        ctx.Response.StatusCode = 500;
+                        await ctx.Response.WriteAsync("{\"error\":\"Failed to update Plex configuration\"}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ctx.Response.StatusCode = 500;
+                    await ctx.Response.WriteAsync($"{{\"error\":\"Server error: {ex.Message}\"}}");
+                }
+            });
+
             app.Logger.LogInformation("Plex Preroll Manager web UI: http://localhost:8089");
             await app.RunAsync();
         }
@@ -1359,6 +1406,8 @@ namespace PlexPrerollManager
         {
             Task<PlexServerStatus> GetServerStatusAsync();
             Task UpdatePrerollsAsync(List<string> prerollPaths);
+            Task<PlexConfig> GetPlexConfigAsync();
+            Task<bool> UpdatePlexConfigAsync(PlexConfig config);
         }
 
         public class PlexService : IPlexService
@@ -1366,15 +1415,17 @@ namespace PlexPrerollManager
             private readonly HttpClient _http;
             private readonly ILogger<PlexService> _logger;
             private readonly IConfiguration _cfg;
+            private PlexConfig? _plexConfig;
 
-            private string PlexUrl => _cfg["Plex:Url"] ?? "http://localhost:32400";
-            private string PlexToken => _cfg["Plex:Token"] ?? "";
+            private string PlexUrl => _plexConfig?.Url ?? _cfg["Plex:Url"] ?? "http://localhost:32400";
+            private string PlexToken => _plexConfig?.Token ?? _cfg["Plex:Token"] ?? "";
 
             public PlexService(HttpClient http, ILogger<PlexService> logger, IConfiguration cfg)
             {
                 _http = http;
                 _logger = logger;
                 _cfg = cfg;
+                LoadPlexConfigAsync().Wait(); // Load config synchronously on startup
             }
 
             public async Task<PlexServerStatus> GetServerStatusAsync()
@@ -1477,6 +1528,79 @@ namespace PlexPrerollManager
                     _logger.LogError(ex, "Error clearing prerolls");
                 }
             }
+
+            public async Task<PlexConfig> GetPlexConfigAsync()
+            {
+                // Ensure config is loaded
+                if (_plexConfig == null)
+                {
+                    await LoadPlexConfigAsync();
+                }
+
+                return new PlexConfig
+                {
+                    Url = PlexUrl,
+                    Token = PlexToken
+                };
+            }
+
+            public async Task<bool> UpdatePlexConfigAsync(PlexConfig config)
+            {
+                try
+                {
+                    // Store Plex config in a custom file since ASP.NET Core config is read-only at runtime
+                    await SavePlexConfigToCustomFileAsync(config);
+                    _logger.LogInformation("Plex configuration updated: {url}", config.Url);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating Plex configuration");
+                    return false;
+                }
+            }
+
+            private async Task LoadPlexConfigAsync()
+            {
+                try
+                {
+                    var configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                                                 "PlexPrerollManager", "plex-config.json");
+
+                    if (File.Exists(configPath))
+                    {
+                        var json = await File.ReadAllTextAsync(configPath);
+                        _plexConfig = JsonSerializer.Deserialize<PlexConfig>(json) ?? new PlexConfig();
+                        _logger.LogInformation("Loaded Plex config from custom file");
+                    }
+                    else
+                    {
+                        _plexConfig = null; // Use ASP.NET Core config
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error loading Plex config from custom file, using default config");
+                    _plexConfig = null; // Use ASP.NET Core config
+                }
+            }
+
+            private async Task SavePlexConfigToCustomFileAsync(PlexConfig config)
+            {
+                try
+                {
+                    var configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                                                 "PlexPrerollManager", "plex-config.json");
+                    Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+
+                    var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+                    await File.WriteAllTextAsync(configPath, json);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error saving Plex config to custom file");
+                }
+            }
         }
 
         // ===== Models =====
@@ -1554,6 +1678,12 @@ namespace PlexPrerollManager
             public string ServerName { get; set; } = "";
             public string Version { get; set; } = "";
             public string? Error { get; set; }
+        }
+
+        public class PlexConfig
+        {
+            public string Url { get; set; } = "http://localhost:32400";
+            public string Token { get; set; } = "";
         }
 
         // ===== Backup/Restore Models =====
