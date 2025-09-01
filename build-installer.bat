@@ -80,7 +80,7 @@ if exist "publish" (
     rd /s /q "publish"
 )
 
-dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish
+dotnet publish PlexPrerollManager.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish
 if %errorlevel% neq 0 (
     echo.
     echo ========================================
@@ -91,14 +91,33 @@ if %errorlevel% neq 0 (
     echo - Missing .NET 9.0 SDK
     echo - Compilation errors in the code
     echo - Missing dependencies
+    echo - Project file not found
     echo.
     echo Please check the error messages above and fix any issues.
+    echo.
+    echo Current directory contents:
+    dir /b
     echo.
     pause
     exit /b 1
 )
+
 echo.
 echo Build completed successfully!
+
+REM Verify the build output
+echo.
+echo Checking build output...
+if exist "publish" (
+    echo Contents of publish directory:
+    dir /b "publish"
+    echo.
+) else (
+    echo ERROR: publish directory was not created!
+    echo.
+    pause
+    exit /b 1
+)
 
 REM Create installer
 echo.

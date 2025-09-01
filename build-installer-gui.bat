@@ -40,14 +40,24 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Check for the main executable
-if not exist "publish\PlexPrerollManager.exe" (
-    echo ERROR: PlexPrerollManager.exe not found in publish directory!
+REM Check for executable files in publish directory
+echo Checking for executable files...
+set "exe_found="
+for %%f in ("publish\*.exe") do (
+    echo Found executable: %%~nf%%~xf
+    set "exe_found=1"
+)
+
+if not defined exe_found (
+    echo ERROR: No executable files found in publish directory!
     echo.
-    echo The publish directory exists but doesn't contain the expected executable.
+    echo The publish directory exists but doesn't contain any .exe files.
+    echo This usually means the build failed or produced unexpected output.
+    echo.
     echo Please check the build output for errors and run build-installer.bat again.
     echo.
-    echo Command: build-installer.bat
+    echo Contents of publish directory:
+    if exist "publish" dir /b "publish"
     echo.
     pause
     exit /b 1
