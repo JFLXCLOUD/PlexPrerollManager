@@ -36,17 +36,26 @@ if %errorlevel% neq 0 (
         set "PATH=%PATH%;%ISCC_EXE:~0,-8%"
     ) else (
         echo.
-        echo Inno Setup not found in common locations.
+        echo ========================================
+        echo  INNO SETUP NOT FOUND!
+        echo ========================================
         echo.
-        echo Please install Inno Setup from:
-        echo https://jrsoftware.org/isinfo.php
+        echo Inno Setup Compiler (iscc) is required to build the installer.
         echo.
-        echo Or install via Chocolatey:
+        echo Please install Inno Setup:
+        echo.
+        echo Option 1 - Direct Download:
+        echo 1. Go to: https://jrsoftware.org/isinfo.php
+        echo 2. Download and install Inno Setup
+        echo 3. Make sure it's added to your system PATH
+        echo.
+        echo Option 2 - Chocolatey (if you have it installed):
         echo choco install innosetup
         echo.
-        echo Then add it to your system PATH.
+        echo After installation, run this script again.
         echo.
-        pause
+        echo Press any key to exit...
+        pause >nul
         exit /b 1
     )
 ) else (
