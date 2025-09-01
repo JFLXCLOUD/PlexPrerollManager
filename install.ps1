@@ -55,18 +55,17 @@ Pop-Location
 $configPath = Join-Path $DataPath "appsettings.json"
 if (-not (Test-Path $configPath)) {
     Write-Host "Creating default configuration..." -ForegroundColor Yellow
-    @"
-{
+    $configJson = '{
   "Plex": {
     "Url": "http://localhost:32400",
     "Token": ""
   },
   "PrerollManager": {
-    "PrerollsPath": "$($DataPath)\\Prerolls",
-    "ConfigPath": "$($DataPath)\\config.json"
+    "PrerollsPath": "' + $DataPath + '\\Prerolls",
+    "ConfigPath": "' + $DataPath + '\\config.json"
   }
-}
-"@ | Out-File -FilePath $configPath -Encoding UTF8
+}'
+    $configJson | Out-File -FilePath $configPath -Encoding UTF8
 }
 
 # Install service
