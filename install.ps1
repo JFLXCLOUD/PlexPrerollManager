@@ -13,11 +13,51 @@ Write-Host "=============================" -ForegroundColor Cyan
 
 # Check .NET 9.0
 Write-Host "Checking .NET 9.0..." -ForegroundColor Yellow
-$dotnetVersion = & dotnet --version 2>$null
-if (-not $dotnetVersion -or $dotnetVersion -lt "9.0") {
-    Write-Host "✗ .NET 9.0 not found. Please install from: https://dotnet.microsoft.com/download/dotnet/9.0" -ForegroundColor Red
+
+# Try to find dotnet in common locations
+$dotnetFound = $false
+$dotnetVersion = $null
+
+# First try direct command
+try {
+    $dotnetVersion = & dotnet --version 2>$null
+    if ($dotnetVersion) {
+        $dotnetFound = $true
+    }
+} catch {
+    # Try common installation paths
+    $commonPaths = @(
+        "$env:ProgramFiles\dotnet\dotnet.exe",
+        "$env:ProgramFiles (x86)\dotnet\dotnet.exe",
+        "$env:LocalAppData\Microsoft\dotnet\dotnet.exe",
+        "$env:USERPROFILE\.dotnet\dotnet.exe"
+    )
+
+    foreach ($path in $commonPaths) {
+        if (Test-Path $path) {
+            try {
+                $dotnetVersion = & $path --version 2>$null
+                if ($dotnetVersion) {
+                    $dotnetFound = $true
+                    break
+                }
+            } catch {
+                continue
+            }
+        }
+    }
+}
+
+if (-not $dotnetFound -or -not $dotnetVersion -or $dotnetVersion -lt "9.0") {
+    Write-Host "✗ .NET 9.0 not found or too old (found: $dotnetVersion)" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Please install .NET 9.0 from:" -ForegroundColor Yellow
+    Write-Host "https://dotnet.microsoft.com/download/dotnet/9.0" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "After installation, restart PowerShell and run this installer again." -ForegroundColor Yellow
     exit 1
 }
+
 Write-Host "✓ .NET $dotnetVersion found" -ForegroundColor Green
 
 # Stop existing service
