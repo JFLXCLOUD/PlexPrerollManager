@@ -60,30 +60,29 @@ choco install ffmpeg
 ## Quick Installation (One-Liner)
 
 ### Windows PowerShell (Recommended)
-Run this improved one-liner in an elevated PowerShell terminal:
+Run this ultra-simple one-liner in an elevated PowerShell terminal:
 ```powershell
-# Download the installer first (avoids execution issues)
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1" -OutFile "$env:TEMP\install.ps1";
-
-# Execute the installer
-& "$env:TEMP\install.ps1"
-```
-
-**Alternative single-command version:**
-```powershell
+# Download and run the simplified installer (73 lines, super fast!)
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1" -OutFile "$env:TEMP\install.ps1"; & "$env:TEMP\install.ps1"
 ```
 
-**Why this approach?** The improved one-liner downloads the script first, then executes it locally. This avoids PowerShell parsing issues that can occur when executing remote scripts directly.
+**Alternative batch file approach:**
+```batch
+# Download install-simple.bat and run it (true one-liner!)
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install-simple.bat' -OutFile '$env:TEMP\install-simple.bat'; & '$env:TEMP\install-simple.bat'"
+```
+
+**Why this approach?** The simplified installer is now only 73 lines (down from 966!) and installs everything automatically in seconds.
 
 This will:
-- ✅ Download the installer script safely
-- ✅ Execute the installer with proper error handling
-- ✅ Install PlexPrerollManager automatically
-- ✅ Install FFmpeg automatically
-- ✅ Set up Windows service
-- ✅ Configure everything automatically
-- ✅ Provide clear feedback throughout the process
+- ✅ Download the ultra-simple installer (73 lines)
+- ✅ Check .NET 9.0 automatically
+- ✅ Stop any existing service
+- ✅ Create directories and copy files
+- ✅ Build the application
+- ✅ Create default configuration
+- ✅ Install and start Windows service
+- ✅ Provide instant feedback
 
 ### Manual Installation
 
@@ -99,12 +98,12 @@ This will:
 
 ### Installation Options
 
-| Method | Admin Required | Service Setup | FFmpeg Install | Best For |
-|--------|---------------|---------------|----------------|----------|
-| `install.ps1` | ✅ Yes | ✅ Auto | ✅ Auto | **New Users** |
-| `install.bat` | ✅ Yes | ✅ Auto | ❌ Manual | **Production** |
-| `install-simple.bat` | ❌ No | ❌ Manual | ❌ Manual | **Testing** |
-| Manual | ❌ No | ❌ Manual | ❌ Manual | **Development** |
+| Method | Lines | Admin Required | Service Setup | FFmpeg Install | Best For |
+|--------|-------|---------------|---------------|----------------|----------|
+| `install-simple.bat` | 3 | ✅ Yes | ✅ Auto | ❌ Manual | **One-Click** |
+| `install.ps1` | 73 | ✅ Yes | ✅ Auto | ❌ Manual | **Simple** |
+| `install.bat` | 274 | ✅ Yes | ✅ Auto | ❌ Manual | **Full Control** |
+| Manual | N/A | ❌ No | ❌ Manual | ❌ Manual | **Development** |
 
 ## Usage
 
