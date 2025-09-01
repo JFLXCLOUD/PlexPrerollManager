@@ -13,16 +13,12 @@ Write-Host "=============================" -ForegroundColor Cyan
 
 # Check .NET 9.0
 Write-Host "Checking .NET 9.0..." -ForegroundColor Yellow
-try {
-    $dotnetVersion = & dotnet --version 2>$null
-    if (-not $dotnetVersion -or $dotnetVersion -lt "9.0") {
-        throw ".NET 9.0 required"
-    }
-    Write-Host "✓ .NET $dotnetVersion found" -ForegroundColor Green
-} catch {
+$dotnetVersion = & dotnet --version 2>$null
+if (-not $dotnetVersion -or $dotnetVersion -lt "9.0") {
     Write-Host "✗ .NET 9.0 not found. Please install from: https://dotnet.microsoft.com/download/dotnet/9.0" -ForegroundColor Red
     exit 1
 }
+Write-Host "✓ .NET $dotnetVersion found" -ForegroundColor Green
 
 # Stop existing service
 $service = Get-Service -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
@@ -55,17 +51,24 @@ Pop-Location
 $configPath = Join-Path $DataPath "appsettings.json"
 if (-not (Test-Path $configPath)) {
     Write-Host "Creating default configuration..." -ForegroundColor Yellow
-    $configJson = '{
-  "Plex": {
-    "Url": "http://localhost:32400",
-    "Token": ""
-  },
-  "PrerollManager": {
-    "PrerollsPath": "' + $DataPath + '\\Prerolls",
-    "ConfigPath": "' + $DataPath + '\\config.json"
-  }
-}'
-    $configJson | Out-File -FilePath $configPath -Encoding UTF8
+    $plexUrl = "http://localhost:32400"
+    $prerollsPath = "$DataPath\Prerolls"
+    $configFilePath = "$DataPath\config.json"
+
+    $jsonLines = @(
+        "{",
+        "  `"Plex`": {",
+        "    `"Url`": `"$plexUrl`"",
+        "    `"Token`": `"`"",
+        "  },",
+        "  `"PrerollManager`": {",
+        "    `"PrerollsPath`": `"$prerollsPath`"",
+        "    `"ConfigPath`": `"$configFilePath`"",
+        "  }",
+        "}"
+    )
+
+    $jsonLines | Out-File -FilePath $configPath -Encoding UTF8
 }
 
 # Install service
