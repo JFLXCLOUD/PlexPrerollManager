@@ -262,7 +262,8 @@ function Write-SubSectionHeader {
                 throw "Automatic .NET installation failed"
             }
         }
-    } catch {
+    }
+    catch {
         Write-Error-Log ".NET check/installation failed" $_
         if ($_.Exception.Message -notlike "*Automatic .NET installation failed*") {
             Write-Error ".NET 9.0 is required but was not found."
@@ -284,7 +285,8 @@ if (-not $SkipFFmpeg) {
         } else {
             throw "FFmpeg not found"
         }
-    } catch {
+    }
+    catch {
         Write-Warning "FFmpeg not found. Installing via Chocolatey..."
         try {
             # Check if Chocolatey is installed
@@ -373,7 +375,8 @@ try {
         New-Item -ItemType Directory -Path $DataPath -Force | Out-Null
     }
     Write-Success "Directories created successfully"
-} catch {
+}
+catch {
     Write-Error "Failed to create directories: $_"
     throw "Directory creation failed"
 }
@@ -393,45 +396,45 @@ try {
     # Download and extract the latest release
     Write-Status "Downloading latest release..."
     # Get latest release info
-        $apiUrl = "https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest"
-        $release = Invoke-RestMethod -Uri $apiUrl -Method Get
+    $apiUrl = "https://api.github.com/repos/JFLXCLOUD/PlexPrerollManager/releases/latest"
+    $release = Invoke-RestMethod -Uri $apiUrl -Method Get
 
-        # Find the ZIP asset
-        $zipAsset = $release.assets | Where-Object { $_.name -like "*.zip" -and $_.name -notlike "*.sha256" } | Select-Object -First 1
+    # Find the ZIP asset
+    $zipAsset = $release.assets | Where-Object { $_.name -like "*.zip" -and $_.name -notlike "*.sha256" } | Select-Object -First 1
 
-        if ($zipAsset) {
-            $zipUrl = $zipAsset.browser_download_url
-            Write-Status "Downloading: $zipUrl"
+    if ($zipAsset) {
+        $zipUrl = $zipAsset.browser_download_url
+        Write-Status "Downloading: $zipUrl"
 
-            # Download ZIP file
-            $tempZip = Join-Path $env:TEMP "PlexPrerollManager.zip"
-            Write-Status "Downloading from: $zipUrl"
-            Write-Progress -Activity "Downloading PlexPrerollManager" -Status "Downloading..." -PercentComplete 0
+        # Download ZIP file
+        $tempZip = Join-Path $env:TEMP "PlexPrerollManager.zip"
+        Write-Status "Downloading from: $zipUrl"
+        Write-Progress -Activity "Downloading PlexPrerollManager" -Status "Downloading..." -PercentComplete 0
 
-            # Get file size for progress tracking
-            try {
-                $response = Invoke-WebRequest -Uri $zipUrl -Method Head
-                $totalSize = [long]$response.Headers.'Content-Length'
-                Write-Log "Download size: $totalSize bytes"
-            } catch {
-                $totalSize = 0
-                Write-Log "Could not determine download size"
-            }
+        # Get file size for progress tracking
+        try {
+            $response = Invoke-WebRequest -Uri $zipUrl -Method Head
+            $totalSize = [long]$response.Headers.'Content-Length'
+            Write-Log "Download size: $totalSize bytes"
+        } catch {
+            $totalSize = 0
+            Write-Log "Could not determine download size"
+        }
 
-            # Download with progress
-            $webClient = New-Object System.Net.WebClient
-            $webClient.DownloadFile($zipUrl, $tempZip)
-            Write-Progress -Activity "Downloading PlexPrerollManager" -Status "Download complete" -PercentComplete 100
-            Write-Progress -Activity "Downloading PlexPrerollManager" -Completed
+        # Download with progress
+        $webClient = New-Object System.Net.WebClient
+        $webClient.DownloadFile($zipUrl, $tempZip)
+        Write-Progress -Activity "Downloading PlexPrerollManager" -Status "Download complete" -PercentComplete 100
+        Write-Progress -Activity "Downloading PlexPrerollManager" -Completed
 
-            # Extract ZIP file
-            Write-Status "Extracting files..."
-            Expand-Archive -Path $tempZip -DestinationPath $InstallPath -Force
+        # Extract ZIP file
+        Write-Status "Extracting files..."
+        Expand-Archive -Path $tempZip -DestinationPath $InstallPath -Force
 
-            # Clean up
-            Remove-Item $tempZip -Force
+        # Clean up
+        Remove-Item $tempZip -Force
 
-            Write-Success "Application files downloaded and extracted successfully"
+        Write-Success "Application files downloaded and extracted successfully"
 
             # Check if this is a compiled release (contains published binaries) or source code
             # First check directly in install path
@@ -734,7 +737,8 @@ try {
         } else {
             throw "Could not find ZIP file in latest release"
         }
-    } catch {
+    }
+    catch {
         Write-Error "Failed to download release: $_"
         Write-Warning "Falling back to local file copy for development..."
 
@@ -811,7 +815,8 @@ try {
             throw "Could not determine script path for local copy"
         }
     }
-} catch {
+}
+catch {
     Write-Error "Failed to download/copy application files: $_"
     exit 1
 }
@@ -841,7 +846,8 @@ if (-not $skipBuild) {
 
         Pop-Location
         Write-Success "Application built successfully"
-    } catch {
+    }
+    catch {
         Write-Progress -Activity "Building PlexPrerollManager" -Completed
         Write-Error "Failed to build application: $_"
         throw "Build failed"
@@ -954,7 +960,8 @@ try {
         Write-Error "Could not find executable at: $exePath"
         throw "Executable not found"
     }
-} catch {
+}
+catch {
     Write-Error-Log "Service installation failed" $_
     Write-Error "Failed to install Windows service: $_"
     Write-Warning "You can still run the application manually: $exePath"
@@ -976,7 +983,8 @@ try {
     $Shortcut.Description = "Open PlexPrerollManager Web Interface"
     $Shortcut.Save()
     Write-Success "Desktop shortcut created"
-} catch {
+}
+catch {
     Write-Warning "Could not create desktop shortcut: $_"
 }
 
@@ -1043,7 +1051,8 @@ try {
     if ($response.StatusCode -eq 200) {
         Write-Success "Service is running and responding correctly!"
     }
-} catch {
+}
+catch {
     Write-Warning "Service may still be starting up. Please wait a moment and try accessing http://localhost:8089"
 }
 
@@ -1052,7 +1061,7 @@ try {
     $global:installSuccess = $true
     Write-Log "Installation completed successfully"
 
-} catch {
+catch {
     $global:installError = $_
     Write-Error-Log "Installation failed" $_
     Write-Host ""
@@ -1068,7 +1077,8 @@ try {
     Write-Host ""
     Write-Host "Please check the log file for detailed error information." -ForegroundColor Yellow
     Write-Host "For help, visit the GitHub repository or check the README.md" -ForegroundColor Yellow
-} finally {
+}
+finally {
     # Always show final status and wait for user
     Write-Host ""
     if ($global:installSuccess) {
@@ -1081,7 +1091,8 @@ try {
     # More robust wait mechanism
     try {
         $null = [Console]::ReadKey($true)
-    } catch {
+    }
+    catch {
         # Fallback for systems where ReadKey doesn't work
         Write-Host "Press Enter to continue..."
         $null = Read-Host
