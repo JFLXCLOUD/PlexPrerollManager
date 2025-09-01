@@ -1,6 +1,6 @@
-# PlexPrerollManager
+# Plex Preroll Manager
 
-A comprehensive web-based management system for Plex cinema prerolls with advanced features like scheduling, video thumbnails, and metadata extraction.
+A comprehensive web-based management system for Plex cinema prerolls with advanced features like scheduling, video thumbnails, and catagories!
 
 ## Features
 
