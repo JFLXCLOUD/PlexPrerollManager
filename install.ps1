@@ -205,8 +205,54 @@ $exePath = Join-Path $InstallPath "PlexPrerollManager.exe"
 Write-Host "Starting service..." -ForegroundColor Yellow
 Start-Service -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
 
+# Verify service started
+Start-Sleep -Seconds 3
+$serviceStatus = Get-Service -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
+
+if ($serviceStatus -and $serviceStatus.Status -eq "Running") {
+    Write-Host "[OK] Service is running" -ForegroundColor Green
+
+    # Test web connectivity
+    Write-Host "Testing web interface..." -ForegroundColor Gray
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:8089" -TimeoutSec 10 -ErrorAction Stop
+        if ($response.StatusCode -eq 200) {
+            Write-Host "[OK] Web interface is responding" -ForegroundColor Green
+        } else {
+            Write-Host "[WARNING] Web interface returned status: $($response.StatusCode)" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "[WARNING] Could not connect to web interface: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "The service may still be starting up. Please wait a moment and try again." -ForegroundColor Gray
+    }
+} else {
+    Write-Host "[WARNING] Service failed to start or is not running" -ForegroundColor Yellow
+    Write-Host "Service Status: $($serviceStatus.Status)" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Troubleshooting steps:" -ForegroundColor Cyan
+    Write-Host "1. Check Windows Event Viewer for error details" -ForegroundColor White
+    Write-Host "2. Try starting manually: Start-Service PlexPrerollManager" -ForegroundColor White
+    Write-Host "3. Check if port 8089 is available: netstat -ano | findstr :8089" -ForegroundColor White
+    Write-Host "4. Verify .NET installation: dotnet --version" -ForegroundColor White
+}
+
 Write-Host ""
 Write-Host "[SUCCESS] Installation complete!" -ForegroundColor Green
 Write-Host "Web Interface: http://localhost:8089" -ForegroundColor Cyan
 Write-Host "Install Path: $InstallPath" -ForegroundColor Gray
 Write-Host "Data Path: $DataPath" -ForegroundColor Gray
+
+if ($serviceStatus -and $serviceStatus.Status -eq "Running") {
+    Write-Host ""
+    Write-Host "NEXT STEPS:" -ForegroundColor Cyan
+    Write-Host "1. Open http://localhost:8089 in your browser" -ForegroundColor White
+    Write-Host "2. Configure your Plex server settings" -ForegroundColor White
+    Write-Host "3. Upload your preroll videos" -ForegroundColor White
+} else {
+    Write-Host ""
+    Write-Host "SERVICE ISSUES DETECTED - MANUAL STARTUP REQUIRED:" -ForegroundColor Yellow
+    Write-Host "1. Open PowerShell as Administrator" -ForegroundColor White
+    Write-Host "2. Run: Start-Service PlexPrerollManager" -ForegroundColor White
+    Write-Host "3. Wait 30 seconds, then visit http://localhost:8089" -ForegroundColor White
+    Write-Host "4. Check Event Viewer if issues persist" -ForegroundColor White
+}
