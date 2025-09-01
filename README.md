@@ -59,56 +59,23 @@ choco install ffmpeg
 
 ## Installation
 
-### Option 1: Download Release (Recommended)
+### Download and Install
 
 1. **Download the latest release** from [GitHub Releases](https://github.com/JFLXCLOUD/PlexPrerollManager/releases)
 2. **Extract** the ZIP file to a folder on your computer
 3. **Run the installer** as Administrator:
    ```batch
-   install.bat          # Full installation with service setup
+   install.bat
    ```
 4. **Open** http://localhost:8089 in your browser
 
-### Option 2: Local Development Setup
-
-If you want to build from source:
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/JFLXCLOUD/PlexPrerollManager.git
-   cd PlexPrerollManager
-   ```
-
-2. **Run the installer** as Administrator:
-   ```batch
-   install.bat          # Full installation with service setup
-   install-simple.bat   # Quick setup (no service)
-   ```
-
-3. **Open** http://localhost:8089 in your browser
-
-### From Source Code
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/JFLXCLOUD/PlexPrerollManager.git
-   cd PlexPrerollManager
-   ```
-
-2. **Run the installer** (Administrator required for service installation):
-   ```batch
-   install.bat                    # Full service installation
-   install-simple.bat            # Quick setup without service
-   ```
-
-### Installation Methods
-
-| Method | Admin Required | Service Setup | Best For |
-|--------|---------------|---------------|----------|
-| **Release ZIP** + `install.bat` | ✅ Yes | ✅ Auto | **Production Use** |
-| **Release ZIP** + `install-simple.bat` | ❌ No | ❌ Manual | **Testing** |
-| **Source Code** + `install.bat` | ✅ Yes | ✅ Auto | **Development** |
-| **Source Code** + `install-simple.bat` | ❌ No | ❌ Manual | **Development** |
+That's it! The installer will automatically:
+- ✅ Check for .NET 9.0 and install if needed
+- ✅ Create necessary directories
+- ✅ Build the application
+- ✅ Install as a Windows service
+- ✅ Set up default configuration
+- ✅ Start the service
 
 ## Usage
 
