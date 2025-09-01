@@ -37,9 +37,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "service"; Description: "Install as Windows service (recommended)"; GroupDescription: "Service Installation"
 
 [Files]
+; Application executable and dependencies
 Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; Web interface files
 Source: "dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
 Source: "scheduling-dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
+
+; Configuration files
 Source: "appsettings.json"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]

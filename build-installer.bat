@@ -74,6 +74,12 @@ echo Building PlexPrerollManager...
 echo Command: dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish
 echo.
 
+REM Clean any existing publish directory
+if exist "publish" (
+    echo Cleaning existing publish directory...
+    rd /s /q "publish"
+)
+
 dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish
 if %errorlevel% neq 0 (
     echo.
@@ -146,9 +152,17 @@ if exist "installer\PlexPrerollManager-Setup-2.0.0.exe" (
     echo Users can now install with a single EXE file!
     echo.
     echo Next steps:
-    echo 1. Test the installer locally
+    echo 1. Test the installer locally (installer\PlexPrerollManager-Setup-2.0.0.exe)
     echo 2. Upload to GitHub Releases
     echo 3. Share with users
+    echo.
+    echo Alternative: Using Inno Setup GUI
+    echo ================================
+    echo If you prefer to use the Inno Setup GUI:
+    echo 1. Run: build-installer-gui.bat (prepares files)
+    echo 2. Open Inno Setup Compiler
+    echo 3. File -> Open -> installer.iss
+    echo 4. Click Compile
     echo.
 ) else (
     echo.
