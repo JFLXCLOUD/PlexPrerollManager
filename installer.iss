@@ -59,8 +59,11 @@ Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 Source: "dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
 Source: "scheduling-dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
 
-; Configuration files
-Source: "appsettings.json"; DestDir: "{app}"; Flags: ignoreversion
+; Configuration files - preserve existing if present
+Source: "appsettings.json"; DestDir: "{app}"; Flags: ignoreversion; Check: not FileExists(ExpandConstant('{app}\appsettings.json'))
+
+; Default configuration template (always install as backup)
+Source: "appsettings.json"; DestDir: "{app}"; DestName: "appsettings.default.json"; Flags: ignoreversion
 
 [Icons]
 Name: "{commonprograms}\{#MyAppName}"; Filename: "http://localhost:8089"; IconFilename: "{app}\{#MyAppExeName}"; IconIndex: 0
@@ -176,6 +179,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
   UpgradeMessage: String;
+  ConfigPreserved: String;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -185,16 +189,23 @@ begin
     else
       UpgradeMessage := ' installed';
 
+    // Check if configuration was preserved
+    if FileExists(ExpandConstant('{app}\appsettings.json')) then
+      ConfigPreserved := #13#10 + 'Your existing configuration has been preserved.' + #13#10 +
+                        'A default configuration template is available as appsettings.default.json.'
+    else
+      ConfigPreserved := '';
+
     if ServicePage.Values[0] then
     begin
       // Install as service
       Exec(ExpandConstant('{sys}\sc.exe'), 'create PlexPrerollManager binPath= "' + ExpandConstant('{app}\{#MyAppExeName}') + '" start= auto', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
       Exec(ExpandConstant('{sys}\sc.exe'), 'start PlexPrerollManager', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
       MsgBox('PlexPrerollManager has been' + UpgradeMessage + ' as a Windows service and started automatically.' + #13#10 +
-             'You can access it at: http://localhost:8089', mbInformation, MB_OK);
+             'You can access it at: http://localhost:8089' + ConfigPreserved, mbInformation, MB_OK);
     end else begin
       MsgBox('PlexPrerollManager has been' + UpgradeMessage + '.' + #13#10 +
-             'You can start it manually by running the executable or access it at: http://localhost:8089', mbInformation, MB_OK);
+             'You can start it manually by running the executable or access it at: http://localhost:8089' + ConfigPreserved, mbInformation, MB_OK);
     end;
   end;
 end;
