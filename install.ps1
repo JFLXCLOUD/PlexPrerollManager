@@ -51,18 +51,18 @@ try {
 
 if (-not $dotnetFound -or -not $dotnetVersion -or $dotnetVersion -lt "9.0") {
     if ($InstallDotNet) {
-        Write-Host "🔄 .NET 9.0 not found, installing automatically..." -ForegroundColor Yellow
+        Write-Host "[INFO] .NET 9.0 not found, installing automatically..." -ForegroundColor Yellow
         Write-Host ""
 
         try {
             # Download and run the dotnet-install script
             $installScriptUrl = "https://dot.net/v1/dotnet-install.ps1"
-            Write-Host "📥 Downloading dotnet-install script..." -ForegroundColor Gray
+            Write-Host "[DOWNLOAD] Downloading dotnet-install script..." -ForegroundColor Gray
 
             $installScript = Invoke-WebRequest -Uri $installScriptUrl -UseBasicParsing
             $scriptBlock = [scriptblock]::Create($installScript.Content)
 
-            Write-Host "⚙️ Installing .NET 9.0 runtime..." -ForegroundColor Gray
+            Write-Host "[INSTALL] Installing .NET 9.0 runtime..." -ForegroundColor Gray
             Write-Host "(This may take a few minutes)" -ForegroundColor Gray
 
             # Install .NET 9.0 runtime (not SDK) to Program Files
@@ -78,13 +78,13 @@ if (-not $dotnetFound -or -not $dotnetVersion -or $dotnetVersion -lt "9.0") {
                 if (Test-Path $dotnetPath) {
                     if ($env:PATH -notlike "*$dotnetPath*") {
                         $env:PATH = "$dotnetPath;$env:PATH"
-                        Write-Host "✅ Added .NET to PATH: $dotnetPath" -ForegroundColor Green
+                        Write-Host "[OK] Added .NET to PATH: $dotnetPath" -ForegroundColor Green
                     }
                 }
             }
 
             # Verify installation
-            Write-Host "🔍 Verifying installation..." -ForegroundColor Gray
+            Write-Host "[VERIFY] Verifying installation..." -ForegroundColor Gray
             $newDotnetVersion = $null
             try {
                 $newDotnetVersion = & dotnet --version 2>$null
@@ -98,16 +98,16 @@ if (-not $dotnetFound -or -not $dotnetVersion -or $dotnetVersion -lt "9.0") {
             }
 
             if ($newDotnetVersion -and $newDotnetVersion -ge "9.0") {
-                Write-Host "✅ .NET $newDotnetVersion installed successfully!" -ForegroundColor Green
+                Write-Host "[SUCCESS] .NET $newDotnetVersion installed successfully!" -ForegroundColor Green
                 Write-Host ""
             } else {
-                Write-Host "⚠️ .NET installation completed but verification failed" -ForegroundColor Yellow
+                Write-Host "[WARNING] .NET installation completed but verification failed" -ForegroundColor Yellow
                 Write-Host "Installation may have succeeded, continuing..." -ForegroundColor Yellow
                 Write-Host ""
             }
 
         } catch {
-            Write-Host "❌ Automatic .NET installation failed" -ForegroundColor Red
+            Write-Host "[ERROR] Automatic .NET installation failed" -ForegroundColor Red
             Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
             Write-Host ""
             Write-Host "Please install .NET 9.0 manually from:" -ForegroundColor Yellow
@@ -116,7 +116,7 @@ if (-not $dotnetFound -or -not $dotnetVersion -or $dotnetVersion -lt "9.0") {
             exit 1
         }
     } else {
-        Write-Host "✗ .NET 9.0 not found or too old (found: $dotnetVersion)" -ForegroundColor Red
+        Write-Host "[ERROR] .NET 9.0 not found or too old (found: $dotnetVersion)" -ForegroundColor Red
         Write-Host ""
         Write-Host "PLEXPREROLLMANAGER REQUIRES .NET 9.0 RUNTIME" -ForegroundColor Yellow
         Write-Host "This application is built with .NET 9.0 and cannot run without it." -ForegroundColor Yellow
@@ -134,7 +134,7 @@ if (-not $dotnetFound -or -not $dotnetVersion -or $dotnetVersion -lt "9.0") {
     }
 }
 
-Write-Host "✓ .NET $dotnetVersion found" -ForegroundColor Green
+Write-Host "[OK] .NET $dotnetVersion found" -ForegroundColor Green
 
 # Stop existing service
 $service = Get-Service -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
@@ -206,7 +206,7 @@ Write-Host "Starting service..." -ForegroundColor Yellow
 Start-Service -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
 
 Write-Host ""
-Write-Host "✓ Installation complete!" -ForegroundColor Green
+Write-Host "[SUCCESS] Installation complete!" -ForegroundColor Green
 Write-Host "Web Interface: http://localhost:8089" -ForegroundColor Cyan
 Write-Host "Install Path: $InstallPath" -ForegroundColor Gray
 Write-Host "Data Path: $DataPath" -ForegroundColor Gray
