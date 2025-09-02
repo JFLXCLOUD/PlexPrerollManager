@@ -31,9 +31,9 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
 DisableProgramGroupPage=yes
 //LicenseFile=LICENSE
-OutputDir=installer
+OutputDir=..\installer
 OutputBaseFilename=PlexPrerollManager-Setup-{#MyAppVersion}-{#BuildType}
-SetupIconFile=icon.ico
+SetupIconFile=installer-src\icon.ico
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin
@@ -56,14 +56,14 @@ Name: "service"; Description: "Install as Windows service (recommended)"; GroupD
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Web interface files
-Source: "dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
-Source: "scheduling-dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\scheduling-dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Configuration files - preserve existing if present
-Source: "appsettings.json"; DestDir: "{app}"; Flags: ignoreversion; Check: not FileExists(ExpandConstant('{app}\appsettings.json'))
+Source: "..\appsettings.json"; DestDir: "{app}"; Flags: ignoreversion; Check: not FileExists(ExpandConstant('{app}\appsettings.json'))
 
 ; Default configuration template (always install as backup)
-Source: "appsettings.json"; DestDir: "{app}"; DestName: "appsettings.default.json"; Flags: ignoreversion
+Source: "..\appsettings.json"; DestDir: "{app}"; DestName: "appsettings.default.json"; Flags: ignoreversion
 
 [Icons]
 Name: "{commonprograms}\{#MyAppName}"; Filename: "http://localhost:8089"; IconFilename: "{app}\{#MyAppExeName}"; IconIndex: 0
