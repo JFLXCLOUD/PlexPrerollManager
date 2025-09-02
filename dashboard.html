@@ -654,6 +654,158 @@
             .categories-section, .upload-section, .schedules-section, .create-schedule-section { padding: 20px; }
             .form-row { grid-template-columns: 1fr; }
         }
+
+        /* Statistics Section */
+        .statistics-section {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .statistics-section h2 {
+            color: #f1f5f9;
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: -0.01em;
+        }
+
+        /* Statistics Controls */
+        .stats-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .stats-controls select {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(30, 41, 59, 0.6);
+            color: #f1f5f9;
+            font-size: 14px;
+        }
+
+        /* Statistics Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stats-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .stats-card h3 {
+            color: #94a3b8;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            color: #f1f5f9;
+            font-size: 2em;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* Charts Container */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-card h3 {
+            color: #f1f5f9;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .chart-card canvas {
+            max-height: 300px;
+        }
+
+        /* Top Prerolls Table */
+        .top-prerolls-section h3 {
+            color: #f1f5f9;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .top-prerolls-table table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-prerolls-table th,
+        .top-prerolls-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-prerolls-table th {
+            background: rgba(51, 65, 85, 0.5);
+            color: #f1f5f9;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .top-prerolls-table td {
+            color: #e2e8f0;
+            font-size: 0.9em;
+        }
+
+        .top-prerolls-table tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        /* Update responsive design to include statistics */
+        .categories-section, .upload-section, .schedules-section, .create-schedule-section, .statistics-section { padding: 20px; }
+        .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+        .charts-container { grid-template-columns: 1fr; }
+        .stats-controls { flex-direction: column; align-items: stretch; }
+        .top-prerolls-table { overflow-x: auto; }
     </style>
 </head>
 <body>
@@ -826,6 +978,66 @@
             <h2>📋 Active Schedules</h2>
             <div class='schedules-grid' id='schedulesGrid'>
                 <div class='loading'>Loading schedules...</div>
+            </div>
+        </div>
+
+        <!-- Usage Statistics Section -->
+        <div class='statistics-section'>
+            <h2>📊 Usage Statistics</h2>
+
+            <!-- Statistics Controls -->
+            <div class='stats-controls'>
+                <select id='statsPeriod'>
+                    <option value='daily'>Daily</option>
+                    <option value='weekly'>Weekly</option>
+                    <option value='monthly'>Monthly</option>
+                </select>
+                <select id='statsDays'>
+                    <option value='7'>Last 7 days</option>
+                    <option value='30'>Last 30 days</option>
+                    <option value='90'>Last 90 days</option>
+                </select>
+                <button class='btn' onclick='refreshStats()'>Refresh</button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class='stats-grid' id='statsGrid'>
+                <div class='stats-card'>
+                    <h3>Total Plays</h3>
+                    <div class='stat-value' id='totalPlays'>0</div>
+                </div>
+                <div class='stats-card'>
+                    <h3>Total Watch Time</h3>
+                    <div class='stat-value' id='totalWatchTime'>0h 0m</div>
+                </div>
+                <div class='stats-card'>
+                    <h3>Unique Prerolls</h3>
+                    <div class='stat-value' id='uniquePrerolls'>0</div>
+                </div>
+                <div class='stats-card'>
+                    <h3>Avg. Play Duration</h3>
+                    <div class='stat-value' id='avgDuration'>0s</div>
+                </div>
+            </div>
+
+            <!-- Charts Container -->
+            <div class='charts-container'>
+                <div class='chart-card'>
+                    <h3>Plays Over Time</h3>
+                    <canvas id='playsChart'></canvas>
+                </div>
+                <div class='chart-card'>
+                    <h3>Top Categories</h3>
+                    <canvas id='categoriesChart'></canvas>
+                </div>
+            </div>
+
+            <!-- Top Prerolls Table -->
+            <div class='top-prerolls-section'>
+                <h3>🏆 Top Performing Prerolls</h3>
+                <div class='top-prerolls-table' id='topPrerollsTable'>
+                    <div class='loading'>Loading top prerolls...</div>
+                </div>
             </div>
         </div>
 
@@ -1560,6 +1772,169 @@
             }
         }
 
+        // ===== Usage Statistics Functions =====
+
+        // Statistics variables
+        let statsData = [];
+        let statsPeriod = 'daily';
+        let statsDays = 30;
+
+        // Load usage statistics
+        async function loadUsageStats() {
+            try {
+                const response = await fetch(`/api/usage/stats?period=${statsPeriod}&days=${statsDays}`);
+                const data = await response.json();
+
+                statsData = data.Data || [];
+                updateStatsDisplay();
+                updateCharts();
+
+            } catch (error) {
+                console.error('Error loading usage stats:', error);
+                showError('Failed to load usage statistics');
+            }
+        }
+
+        // Update statistics display
+        function updateStatsDisplay() {
+            const totalPlays = statsData.reduce((sum, day) => sum + (day.Plays || 0), 0);
+            const totalWatchTime = statsData.reduce((sum, day) => sum + (day.TotalWatchTime || 0), 0);
+            const uniquePrerolls = new Set(statsData.flatMap(day => day.UniquePrerolls || [])).size;
+            const avgDuration = totalPlays > 0 ? Math.round(totalWatchTime / totalPlays) : 0;
+
+            document.getElementById('totalPlays').textContent = totalPlays.toLocaleString();
+            document.getElementById('totalWatchTime').textContent = formatDuration(totalWatchTime);
+            document.getElementById('uniquePrerolls').textContent = uniquePrerolls;
+            document.getElementById('avgDuration').textContent = formatDuration(avgDuration);
+        }
+
+        // Update charts (requires Chart.js)
+        function updateCharts() {
+            updatePlaysChart();
+            updateCategoriesChart();
+        }
+
+        function updatePlaysChart() {
+            const ctx = document.getElementById('playsChart').getContext('2d');
+
+            const labels = statsData.map(day => new Date(day.Date).toLocaleDateString());
+            const playsData = statsData.map(day => day.Plays || 0);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Plays',
+                        data: playsData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateCategoriesChart() {
+            const ctx = document.getElementById('categoriesChart').getContext('2d');
+
+            // Aggregate by category
+            const categoryStats = {};
+            statsData.forEach(day => {
+                const category = day.CategoryName;
+                if (!categoryStats[category]) {
+                    categoryStats[category] = 0;
+                }
+                categoryStats[category] += day.Plays || 0;
+            });
+
+            const labels = Object.keys(categoryStats);
+            const data = Object.values(categoryStats);
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
+                            '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // Load top prerolls
+        async function loadTopPrerolls() {
+            try {
+                const response = await fetch(`/api/usage/top?limit=10&period=${statsPeriod}&days=${statsDays}`);
+                const topPrerolls = await response.json();
+
+                const table = document.getElementById('topPrerollsTable');
+                if (topPrerolls.length === 0) {
+                    table.innerHTML = '<p>No preroll usage data available yet.</p>';
+                    return;
+                }
+
+                table.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Preroll</th>
+                                <th>Category</th>
+                                <th>Plays</th>
+                                <th>Total Watch Time</th>
+                                <th>Avg. Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${topPrerolls.map((preroll, index) => `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${preroll.Name}</td>
+                                    <td>${preroll.CategoryName}</td>
+                                    <td>${preroll.Plays}</td>
+                                    <td>${formatDuration(preroll.TotalWatchTime)}</td>
+                                    <td>${formatDuration(Math.round(preroll.TotalWatchTime / preroll.Plays))}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+            } catch (error) {
+                console.error('Error loading top prerolls:', error);
+                document.getElementById('topPrerollsTable').innerHTML = '<div class="error">Failed to load top prerolls</div>';
+            }
+        }
+
+        // Statistics controls
+        function refreshStats() {
+            statsPeriod = document.getElementById('statsPeriod').value;
+            statsDays = parseInt(document.getElementById('statsDays').value);
+
+            loadUsageStats();
+            loadTopPrerolls();
+        }
+
         // ===== Update Notification Functions =====
 
         async function checkForUpdates() {
@@ -1634,6 +2009,8 @@
             loadCategories();
             loadSchedules();
             loadBackups();
+            loadUsageStats();
+            loadTopPrerolls();
             checkForUpdates();
 
             // Refresh data every 30 seconds
@@ -1643,9 +2020,18 @@
                 loadSchedules();
             }, 30000);
 
+            // Refresh statistics every 5 minutes
+            setInterval(() => {
+                loadUsageStats();
+                loadTopPrerolls();
+            }, 5 * 60 * 1000);
+
             // Check for updates every 4 hours
             setInterval(checkForUpdates, 4 * 60 * 60 * 1000);
         });
     </script>
+
+    <!-- Chart.js for statistics visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
