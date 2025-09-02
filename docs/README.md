@@ -59,23 +59,41 @@ choco install ffmpeg
 
 ## Installation
 
-### Download and Install
+### Windows Installer (Recommended)
+Download and run the professional Windows installer:
 
-1. **Download the latest release** from [GitHub Releases](https://github.com/JFLXCLOUD/PlexPrerollManager/releases)
-2. **Extract** the ZIP file to a folder on your computer
-3. **Run the installer** as Administrator:
-   ```batch
-   install.bat
-   ```
-4. **Open** http://localhost:8089 in your browser
+1. Go to [GitHub Releases](https://github.com/JFLXCLOUD/PlexPrerollManager/releases)
+2. Download `PlexPrerollManager-Setup-2.1.0.exe`
+3. Run as Administrator
+4. Follow the installation wizard
+5. Choose service installation (recommended)
 
-That's it! The installer will automatically:
-- ✅ Check for .NET 9.0 and install if needed
-- ✅ Create necessary directories
-- ✅ Build the application
-- ✅ Install as a Windows service
-- ✅ Set up default configuration
-- ✅ Start the service
+**Features:**
+- ✅ Professional installation wizard
+- ✅ Automatic Windows service setup
+- ✅ Configuration file preservation during upgrades
+- ✅ Clean file organization
+- ✅ Desktop and start menu shortcuts
+
+### Alternative Installation Methods
+
+#### PowerShell One-Liner
+```powershell
+# Download and run the simplified installer
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1" -OutFile "$env:TEMP\install.ps1"; & "$env:TEMP\install.ps1"
+```
+
+#### Batch File One-Liner
+```batch
+# Download and run the ultra-simple installer
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install-simple.bat' -OutFile '$env:TEMP\install-simple.bat'; & '$env:TEMP\install-simple.bat'"
+```
+
+### System Requirements
+- Windows 10 or 11 (64-bit)
+- .NET 9.0 (included in installer)
+- 100MB free disk space
+- Administrator privileges
 
 ## Usage
 
