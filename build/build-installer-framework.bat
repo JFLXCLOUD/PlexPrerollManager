@@ -2,8 +2,8 @@
 REM PlexPrerollManager Installer Builder (Framework-Dependent)
 REM This creates a smaller installer that requires .NET to be installed separately
 
-REM Change to the script's directory
-cd /d "%~dp0"
+REM Change to the parent directory (project root)
+cd /d "%~dp0.."
 
 echo.
 echo ========================================
@@ -124,10 +124,10 @@ echo ========================================
 echo  Creating Framework-Dependent Installer
 echo ========================================
 echo.
-echo Command: iscc /DFrameworkDependent installer.iss
+echo Command: iscc /DFrameworkDependent installer-src\installer.iss
 echo.
 
-iscc /DFrameworkDependent installer.iss
+iscc /DFrameworkDependent installer-src\installer.iss
 if %errorlevel% neq 0 (
     echo.
     echo ========================================

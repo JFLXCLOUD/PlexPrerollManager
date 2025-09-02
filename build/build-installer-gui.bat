@@ -2,8 +2,8 @@
 REM PlexPrerollManager Installer Builder for Inno Setup GUI
 REM Run this from Inno Setup Compiler GUI
 
-REM Change to the script's directory
-cd /d "%~dp0"
+REM Change to the parent directory (project root)
+cd /d "%~dp0.."
 
 echo.
 echo ========================================
@@ -95,7 +95,7 @@ echo IMPORTANT: Make sure Inno Setup Compiler is running from this directory!
 echo.
 echo Steps to create the installer:
 echo 1. Open Inno Setup Compiler
-echo 2. File -> Open -> Select 'installer.iss' from this folder
+echo 2. File -> Open -> Select 'installer-src\installer.iss' from this folder
 echo 3. Click 'Compile' (F9)
 echo 4. The installer will be created in 'installer\' folder
 echo.
@@ -106,6 +106,6 @@ echo - scheduling-dashboard.html (scheduling interface)
 echo - appsettings.json (configuration)
 echo.
 echo If you get file not found errors, make sure you're opening
-echo installer.iss from the correct directory (this project folder).
+echo installer-src\installer.iss from the correct directory (this project folder).
 echo.
 pause

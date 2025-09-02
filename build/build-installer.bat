@@ -2,8 +2,8 @@
 REM PlexPrerollManager Installer Builder
 REM This script builds a professional Windows installer using Inno Setup
 
-REM Change to the script's directory
-cd /d "%~dp0"
+REM Change to the parent directory (project root)
+cd /d "%~dp0.."
 
 echo.
 echo ========================================
@@ -125,10 +125,10 @@ echo ========================================
 echo  Creating Professional Installer
 echo ========================================
 echo.
-echo Command: iscc installer.iss
+echo Command: iscc installer-src\installer.iss
 echo.
 
-iscc installer.iss
+iscc installer-src\installer.iss
 if %errorlevel% neq 0 (
     echo.
     echo ========================================
@@ -151,15 +151,15 @@ if %errorlevel% neq 0 (
 )
 
 REM Verify installer was created
-if exist "installer\PlexPrerollManager-Setup-2.0.0.exe" (
-    for %%A in ("installer\PlexPrerollManager-Setup-2.0.0.exe") do set "installer_size=%%~zA"
+if exist "installer\PlexPrerollManager-Setup-2.0.0-Self-Contained.exe" (
+    for %%A in ("installer\PlexPrerollManager-Setup-2.0.0-Self-Contained.exe") do set "installer_size=%%~zA"
     echo.
     echo ========================================
-    echo  INSTALLER CREATED SUCCESSFULLY!
+    echo  SELF-CONTAINED INSTALLER CREATED!
     echo ========================================
     echo.
     echo Files created:
-    echo   installer\PlexPrerollManager-Setup-2.0.0.exe (!installer_size! bytes)
+    echo   installer\PlexPrerollManager-Setup-2.0.0-Self-Contained.exe (!installer_size! bytes)
     echo.
     echo This is a professional Windows installer that:
     echo - Includes .NET runtime (no separate download needed)
