@@ -115,5 +115,8 @@ appsettings.Production.json
 config.local.json
 *.local
 
+# Build directory (local development files, not tracked on GitHub)
+build/
+
 # Release notes (local only, not tracked on GitHub)
 RELEASE_NOTES.md
