@@ -114,3 +114,6 @@ appsettings.Development.json
 appsettings.Production.json
 config.local.json
 *.local
+
+# Release notes (local only, not tracked on GitHub)
+RELEASE_NOTES.md
