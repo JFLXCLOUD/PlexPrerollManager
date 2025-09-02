@@ -120,3 +120,6 @@ build/
 
 # Release notes (local only, not tracked on GitHub)
 RELEASE_NOTES.md
+
+# Documentation folder (local only, not tracked on GitHub)
+docs/
