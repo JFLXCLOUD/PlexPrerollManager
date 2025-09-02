@@ -39,6 +39,7 @@ SolidCompression=yes
 PrivilegesRequired=admin
 ; Force 64-bit installation to Program Files (not Program Files (x86))
 ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed=x64
 ; Upgrade handling
 AppVerName={#MyAppName} {#MyAppVersion}
 VersionInfoVersion={#MyAppVersion}
@@ -53,9 +54,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "service"; Description: "Install as Windows service (recommended)"; GroupDescription: "Service Installation"
 
 [Files]
-; Application executable and dependencies
+; Application executable and dependencies (exclude unnecessary files)
 ; NOTE: Run build-installer.bat or build-installer-framework.bat first to create the publish directory
-Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; \
+  Excludes: "*.pdb,*.staticwebassets.endpoints.json,web.config,dashboard.html,scheduling-dashboard.html,appsettings.json"
 
 ; Web interface files (organized in web subdirectory)
 Source: "{#SourcePath}\..\dashboard.html"; DestDir: "{app}\web"; Flags: ignoreversion
