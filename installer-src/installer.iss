@@ -59,8 +59,8 @@ Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 Source: "..\dashboard.html"; DestDir: "{app}\web"; Flags: ignoreversion
 Source: "..\scheduling-dashboard.html"; DestDir: "{app}\web"; Flags: ignoreversion
 
-; Configuration files - preserve existing if present
-Source: "..\appsettings.json"; DestDir: "{app}"; Flags: ignoreversion; Check: not FileExists(ExpandConstant('{app}\appsettings.json'))
+; Configuration files - preserve existing during upgrades
+Source: "..\appsettings.json"; DestDir: "{app}"; Flags: ignoreversion external
 
 ; Default configuration template (always install as backup)
 Source: "..\appsettings.json"; DestDir: "{app}\config"; DestName: "appsettings.default.json"; Flags: ignoreversion
