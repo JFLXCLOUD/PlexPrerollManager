@@ -1817,10 +1817,15 @@
         function updatePlaysChart() {
             const ctx = document.getElementById('playsChart').getContext('2d');
 
+            // Destroy existing chart if it exists
+            if (window.playsChart instanceof Chart) {
+                window.playsChart.destroy();
+            }
+
             const labels = statsData.map(day => new Date(day.Date).toLocaleDateString());
             const playsData = statsData.map(day => day.Plays || 0);
 
-            new Chart(ctx, {
+            window.playsChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
@@ -1847,6 +1852,11 @@
         function updateCategoriesChart() {
             const ctx = document.getElementById('categoriesChart').getContext('2d');
 
+            // Destroy existing chart if it exists
+            if (window.categoriesChart instanceof Chart) {
+                window.categoriesChart.destroy();
+            }
+
             // Aggregate by category
             const categoryStats = {};
             statsData.forEach(day => {
@@ -1860,7 +1870,7 @@
             const labels = Object.keys(categoryStats);
             const data = Object.values(categoryStats);
 
-            new Chart(ctx, {
+            window.categoriesChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
