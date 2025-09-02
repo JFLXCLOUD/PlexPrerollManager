@@ -1,14 +1,11 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using PlexPrerollManager.Services;
 
 namespace PlexPrerollManager.Services
 {
-    /// <summary>
-    /// Service to initialize the database and ensure statistics tables exist
-    /// </summary>
     public class DatabaseInitializationService : IHostedService
     {
         private readonly UsageTrackingService _usageService;
@@ -32,14 +29,12 @@ namespace PlexPrerollManager.Services
 
                 _logger.LogInformation("Usage statistics database initialized successfully");
 
-                // Optionally update daily stats on startup
                 await _usageService.UpdateDailyStatsAsync();
                 _logger.LogInformation("Daily statistics updated");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error initializing usage statistics database");
-                // Don't throw - we don't want database initialization to crash the app
             }
         }
 
