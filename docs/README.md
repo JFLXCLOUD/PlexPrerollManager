@@ -30,6 +30,8 @@ A comprehensive web-based management system for Plex cinema prerolls with advanc
 - **Large File Support**: Handles videos up to any size with progress tracking
 - **Error Handling**: Comprehensive error handling and user feedback
 - **Real-time Updates**: Live status updates and data refresh
+- **Usage Statistics**: Track preroll plays, watch time, and engagement metrics
+- **Analytics Dashboard**: Visualize usage patterns and performance data
 
 ## Prerequisites
 
