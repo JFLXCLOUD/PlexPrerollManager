@@ -37,6 +37,8 @@ SetupIconFile=icon.ico
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin
+; Force 64-bit installation to Program Files (not Program Files (x86))
+ArchitecturesInstallIn64BitMode=x64
 ; Upgrade handling
 AppVerName={#MyAppName} {#MyAppVersion}
 VersionInfoVersion={#MyAppVersion}
@@ -55,7 +57,7 @@ Name: "service"; Description: "Install as Windows service (recommended)"; GroupD
 ; NOTE: Run build-installer.bat or build-installer-framework.bat first to create the publish directory
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Web interface files
+; Web interface files (organized in web subdirectory)
 Source: "{#SourcePath}\..\dashboard.html"; DestDir: "{app}\web"; Flags: ignoreversion
 Source: "{#SourcePath}\..\scheduling-dashboard.html"; DestDir: "{app}\web"; Flags: ignoreversion
 
@@ -65,7 +67,7 @@ Source: "{#SourcePath}\..\appsettings.json"; DestDir: "{app}"; Flags: onlyifdoes
 ; Default configuration template (always install as backup)
 Source: "{#SourcePath}\..\appsettings.json"; DestDir: "{app}\config"; DestName: "appsettings.default.json"; Flags: ignoreversion
 
-; Create data directories
+; Create data directories (placeholder file to ensure directory creation)
 Source: "{#SourcePath}\..\appsettings.json"; DestDir: "{app}\data"; DestName: ".gitkeep"; Flags: ignoreversion
 
 [Icons]
@@ -186,6 +188,17 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
+    // Clean up any duplicate files that might have been created
+    // Remove duplicate HTML files from root if they exist in web directory
+    if FileExists(ExpandConstant('{app}\web\dashboard.html')) and FileExists(ExpandConstant('{app}\dashboard.html')) then
+    begin
+      DeleteFile(ExpandConstant('{app}\dashboard.html'));
+    end;
+    if FileExists(ExpandConstant('{app}\web\scheduling-dashboard.html')) and FileExists(ExpandConstant('{app}\scheduling-dashboard.html')) then
+    begin
+      DeleteFile(ExpandConstant('{app}\scheduling-dashboard.html'));
+    end;
+
     // Determine if this is an upgrade
     if IsUpgrade() then
       UpgradeMessage := ' upgraded'
@@ -195,7 +208,7 @@ begin
     // Check if configuration was preserved
     if FileExists(ExpandConstant('{app}\appsettings.json')) then
       ConfigPreserved := #13#10 + 'Your existing configuration has been preserved.' + #13#10 +
-                        'A default configuration template is available as appsettings.default.json.'
+                         'A default configuration template is available in the config folder.'
     else
       ConfigPreserved := '';
 
@@ -233,3 +246,6 @@ Root: HKLM; Subkey: "Software\{#MyAppName}"; ValueType: string; ValueName: "Inst
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\*"
+
+; Clean up data directory separately (preserve user data during uninstall if desired)
+; Type: filesandordirs; Name: "{app}\data\*"
