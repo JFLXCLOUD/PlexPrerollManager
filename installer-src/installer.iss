@@ -13,7 +13,7 @@
   #define PublishDir "publish-framework"
 #else
   #define BuildType "Self-Contained"
-  #define PublishDir "publish"
+  #define PublishDir "..\publish"
 #endif
 
 [Setup]
@@ -52,18 +52,21 @@ Name: "service"; Description: "Install as Windows service (recommended)"; GroupD
 
 [Files]
 ; Application executable and dependencies
-; NOTE: Run build-installer.bat or build-installer-gui.bat first to create the publish directory
+; NOTE: Run build-installer.bat or build-installer-framework.bat first to create the publish directory
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Web interface files
-Source: "..\dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\scheduling-dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dashboard.html"; DestDir: "{app}\web"; Flags: ignoreversion
+Source: "..\scheduling-dashboard.html"; DestDir: "{app}\web"; Flags: ignoreversion
 
 ; Configuration files - preserve existing if present
 Source: "..\appsettings.json"; DestDir: "{app}"; Flags: ignoreversion; Check: not FileExists(ExpandConstant('{app}\appsettings.json'))
 
 ; Default configuration template (always install as backup)
-Source: "..\appsettings.json"; DestDir: "{app}"; DestName: "appsettings.default.json"; Flags: ignoreversion
+Source: "..\appsettings.json"; DestDir: "{app}\config"; DestName: "appsettings.default.json"; Flags: ignoreversion
+
+; Create data directories
+Source: "..\appsettings.json"; DestDir: "{app}\data"; DestName: ".gitkeep"; Flags: ignoreversion
 
 [Icons]
 Name: "{commonprograms}\{#MyAppName}"; Filename: "http://localhost:8089"; IconFilename: "{app}\{#MyAppExeName}"; IconIndex: 0

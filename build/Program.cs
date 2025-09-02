@@ -99,7 +99,13 @@ namespace PlexPrerollManager
             app.MapGet("/", async ctx =>
             {
                 ctx.Response.ContentType = "text/html; charset=utf-8";
-                var htmlPath = Path.Combine(AppContext.BaseDirectory, "dashboard.html");
+                // Try web subdirectory first (installer location), then fallback to root
+                var htmlPath = Path.Combine(AppContext.BaseDirectory, "web", "dashboard.html");
+                if (!File.Exists(htmlPath))
+                {
+                    htmlPath = Path.Combine(AppContext.BaseDirectory, "dashboard.html");
+                }
+
                 if (File.Exists(htmlPath))
                 {
                     var html = await File.ReadAllTextAsync(htmlPath);
@@ -115,7 +121,13 @@ namespace PlexPrerollManager
             app.MapGet("/scheduling", async ctx =>
             {
                 ctx.Response.ContentType = "text/html; charset=utf-8";
-                var htmlPath = Path.Combine(AppContext.BaseDirectory, "scheduling-dashboard.html");
+                // Try web subdirectory first (installer location), then fallback to root
+                var htmlPath = Path.Combine(AppContext.BaseDirectory, "web", "scheduling-dashboard.html");
+                if (!File.Exists(htmlPath))
+                {
+                    htmlPath = Path.Combine(AppContext.BaseDirectory, "scheduling-dashboard.html");
+                }
+
                 if (File.Exists(htmlPath))
                 {
                     var html = await File.ReadAllTextAsync(htmlPath);
