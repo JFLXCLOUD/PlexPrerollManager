@@ -19,7 +19,8 @@ try {
         throw ".NET 9.0 required"
     }
     Write-Host "✓ .NET $dotnetVersion found" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "✗ .NET 9.0 not found. Please install from: https://dotnet.microsoft.com/download/dotnet/9.0" -ForegroundColor Red
     exit 1
 }
