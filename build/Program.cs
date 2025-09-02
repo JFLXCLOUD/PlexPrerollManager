@@ -753,7 +753,7 @@ namespace PlexPrerollManager
                     var backup = new PrerollBackup
                     {
                         Timestamp = DateTime.Now,
-                        Version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.0.0",
+                        Version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.1.0",
                         Config = await LoadConfigAsync(),
                         Categories = new List<BackupCategory>()
                     };
@@ -888,7 +888,7 @@ namespace PlexPrerollManager
 
                     if (release != null)
                     {
-                        var currentVersion = new Version(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.0.0");
+                        var currentVersion = new Version(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.1.0");
                         var latestVersion = new Version(release.TagName.TrimStart('v'));
 
                         return new UpdateInfo
@@ -909,8 +909,8 @@ namespace PlexPrerollManager
 
                 return new UpdateInfo
                 {
-                    CurrentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.0.0",
-                    LatestVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.0.0",
+                    CurrentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.1.0",
+                    LatestVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.1.0",
                     IsUpdateAvailable = false
                 };
             }

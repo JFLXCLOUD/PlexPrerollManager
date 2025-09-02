@@ -2,7 +2,7 @@
 ; This script creates a professional Windows installer
 
 #define MyAppName "PlexPrerollManager"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "2.1.0"
 #define MyAppPublisher "JFLXCLOUD"
 #define MyAppURL "https://github.com/JFLXCLOUD/PlexPrerollManager"
 #define MyAppExeName "PlexPrerollManager.exe"
@@ -33,7 +33,7 @@ DisableProgramGroupPage=yes
 //LicenseFile=LICENSE
 OutputDir=..\installer
 OutputBaseFilename=PlexPrerollManager-Setup-{#MyAppVersion}-{#BuildType}
-SetupIconFile=installer-src\icon.ico
+SetupIconFile=icon.ico
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin
