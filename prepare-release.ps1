@@ -57,15 +57,20 @@ function Copy-SourceFiles {
         "Program.cs",
         "PlexPrerollManager.csproj",
         "appsettings.json",
-        "dashboard.html",
-        "oauth.html",
-        "scheduling-dashboard.html",
-        "icon.ico",
         "README.md",
         "RELEASE_NOTES.md",
         "QUICK_START.md",
         "INSTALLATION.md"
     )
+
+    # Copy HTML files from web folder
+    $htmlFiles = @("dashboard.html", "oauth.html", "scheduling-dashboard.html")
+    foreach ($file in $htmlFiles) {
+        $sourcePath = Join-Path "web" $file
+        if (Test-Path $sourcePath) {
+            Copy-Item -Path $sourcePath -Destination $OutputPath -Force
+        }
+    }
 
     foreach ($file in $includeFiles) {
         if (Test-Path $file) {
