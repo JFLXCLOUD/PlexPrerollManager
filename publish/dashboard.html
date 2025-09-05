@@ -561,6 +561,53 @@
         .update-dismiss:hover {
             background: rgba(255, 255, 255, 0.1);
         }
+
+        /* Plex.tv Authentication Styles */
+        .plex-auth-section {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .plex-auth-card h3 {
+            color: #f1f5f9;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .plex-auth-card #plexAuthStatus {
+            color: #94a3b8;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+        .plex-auth-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .plex-auth-actions .btn {
+            flex: 1;
+        }
+
+        #plexAuthInstructions {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        #plexAuthInstructions p {
+            margin: 8px 0;
+            color: #e2e8f0;
+            font-size: 0.9em;
+        }
         .schedules-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -846,6 +893,23 @@
             </div>
         </div>
 
+        <!-- Plex.tv Authentication Section -->
+        <div class='plex-auth-section' style='display: none;'>
+            <div class='plex-auth-card'>
+                <h3>🔐 Plex.tv Authentication</h3>
+                <div id='plexAuthStatus'>Not authenticated</div>
+                <div class='plex-auth-actions'>
+                    <button class='btn' id='startPlexAuthBtn' onclick='startPlexAuthentication()'>Start Authentication</button>
+                    <button class='btn btn-secondary' id='checkPlexAuthBtn' onclick='checkPlexAuthentication()' style='display: none;'>Check Status</button>
+                </div>
+                <div id='plexAuthInstructions' style='display: none; margin-top: 15px;'>
+                    <p><strong>Step 1:</strong> Click the authentication link that opens in a new tab</p>
+                    <p><strong>Step 2:</strong> Authorize PlexPrerollManager in your browser</p>
+                    <p><strong>Step 3:</strong> Return here and click "Check Status"</p>
+                </div>
+            </div>
+        </div>
+
         <div class='categories-section'>
             <h2>Categories</h2>
             <div class='categories-grid' id='categoriesGrid'>
@@ -1059,6 +1123,147 @@
         let categories = [];
         let schedules = [];
         let currentCategory = null;
+        let plexAuthPin = null;
+        let plexAuthPinId = null;
+        let plexAuthInterval = null;
+
+        // ===== Plex.tv Authentication Functions =====
+
+        async function startPlexAuthentication() {
+            try {
+                const response = await fetch('/api/plex/auth/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // CRITICAL FIX: Store both PIN CODE and PIN ID
+                    plexAuthPin = result.pin; // PIN CODE for display (e.g., "18pehfm7q750jkbesn0d8xcj9")
+                    plexAuthPinId = result.pinId; // PIN ID for API checks (e.g., "165415683")
+                    
+                    document.getElementById('plexAuthStatus').innerHTML = `<span style="color: #3b82f6;">🔗 PIN: ${result.pin}</span>`;
+                    document.getElementById('startPlexAuthBtn').style.display = 'none';
+                    document.getElementById('checkPlexAuthBtn').style.display = 'inline-block';
+                    document.getElementById('plexAuthInstructions').style.display = 'block';
+
+                    // Open the auth URL in a new tab
+                    window.open(result.authUrl, '_blank');
+
+                    // Start checking for completion
+                    startPlexAuthPolling();
+
+                    showSuccess('Plex.tv authentication started! Check the new tab.');
+                } else {
+                    showError(result.message || 'Failed to start authentication');
+                }
+            } catch (error) {
+                console.error('Error starting Plex auth:', error);
+                showError('Failed to start Plex.tv authentication');
+            }
+        }
+
+        async function checkPlexAuthentication() {
+            if (!plexAuthPinId) {
+                showError('No authentication in progress');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/plex/auth/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ PlexTvPin: plexAuthPinId }) // Use PIN ID for API checks
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('plexAuthStatus').innerHTML = `<span style="color: #10b981;">✅ Authenticated as ${result.user.username}</span>`;
+                    document.getElementById('startPlexAuthBtn').style.display = 'inline-block';
+                    document.getElementById('checkPlexAuthBtn').style.display = 'none';
+                    document.getElementById('plexAuthInstructions').style.display = 'none';
+
+                    // Stop polling
+                    if (plexAuthInterval) {
+                        clearInterval(plexAuthInterval);
+                        plexAuthInterval = null;
+                    }
+
+                    // Clear the PIN
+                    plexAuthPin = null;
+
+                    showSuccess(`Successfully authenticated with Plex.tv as ${result.user.username}!`);
+
+                    // Refresh status to show new auth method
+                    loadStatus();
+                } else {
+                    // Check if PIN expired
+                    if (result.expired || result.message.includes('expired')) {
+                        // Stop polling and reset UI
+                        if (plexAuthInterval) {
+                            clearInterval(plexAuthInterval);
+                            plexAuthInterval = null;
+                        }
+                        plexAuthPin = null;
+                        plexAuthPinId = null;
+                        
+                        document.getElementById('plexAuthStatus').innerHTML = '<span style="color: #ef4444;">⏰ PIN expired - please start again</span>';
+                        document.getElementById('startPlexAuthBtn').style.display = 'inline-block';
+                        document.getElementById('checkPlexAuthBtn').style.display = 'none';
+                        document.getElementById('plexAuthInstructions').style.display = 'none';
+                        
+                        showError('PIN has expired. Please start the authentication process again.');
+                        return;
+                    }
+                    
+                    // Only show error if not polling automatically
+                    if (!plexAuthInterval) {
+                        showError(result.message || 'Authentication not yet completed');
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking Plex auth:', error);
+                if (!plexAuthInterval) {
+                    showError('Failed to check authentication status');
+                }
+            }
+        }
+
+        function startPlexAuthPolling() {
+            // Check every 3 seconds for 3 minutes (PINs typically expire after 5 minutes)
+            let attempts = 0;
+            const maxAttempts = 60; // 3 minutes total
+            const pollInterval = 3000; // 3 seconds
+
+            plexAuthInterval = setInterval(async () => {
+                attempts++;
+                console.log(`Checking Plex auth status (attempt ${attempts}/${maxAttempts})`);
+
+                if (attempts >= maxAttempts) {
+                    clearInterval(plexAuthInterval);
+                    plexAuthInterval = null;
+                    plexAuthPin = null;
+                    plexAuthPinId = null;
+                    
+                    document.getElementById('plexAuthStatus').innerHTML = '<span style="color: #ef4444;">⏰ Authentication timed out</span>';
+                    document.getElementById('startPlexAuthBtn').style.display = 'inline-block';
+                    document.getElementById('checkPlexAuthBtn').style.display = 'none';
+                    document.getElementById('plexAuthInstructions').style.display = 'none';
+                    
+                    showError('Authentication timed out. Please try again.');
+                    return;
+                }
+
+                try {
+                    await checkPlexAuthentication();
+                } catch (error) {
+                    // Continue polling unless it's a critical error
+                    console.log(`Polling attempt ${attempts} failed:`, error.message);
+                }
+            }, pollInterval);
+        }
 
         // Load initial data
         async function loadStatus() {
@@ -1080,6 +1285,17 @@
                 // Update stats
                 document.getElementById('statsInfo').innerHTML = `Total Prerolls: <strong>${data.TotalPrerolls}</strong>`;
                 document.getElementById('activeCategory').innerHTML = `<strong>${data.ActiveCategory}</strong>`;
+
+                // Show Plex.tv auth section if not connected or using basic auth
+                const plexAuthSection = document.querySelector('.plex-auth-section');
+                if (!data.PlexConnected || data.AuthMethod === 'Token' || data.AuthMethod === 'None') {
+                    plexAuthSection.style.display = 'block';
+                    document.getElementById('plexAuthStatus').innerHTML = data.PlexConnected
+                        ? `Connected via ${data.AuthMethod} - <a href="#" onclick="document.querySelector('.plex-auth-section').scrollIntoView(); return false;" style="color: #3b82f6;">Upgrade to Plex.tv auth</a>`
+                        : 'Not connected - authenticate with Plex.tv for better integration';
+                } else {
+                    plexAuthSection.style.display = 'none';
+                }
 
             } catch (error) {
                 console.error('Error loading status:', error);
@@ -1464,10 +1680,10 @@
 
                 const result = await response.json();
 
-                if (result.Success || result.SuccessfulUploads > 0) {
-                    const message = result.Success
-                        ? `All ${result.TotalFiles} files uploaded successfully!`
-                        : `${result.SuccessfulUploads} of ${result.TotalFiles} files uploaded successfully!`;
+                if (result.success || result.successfulUploads > 0) {
+                    const message = result.success
+                        ? `All ${result.totalFiles} files uploaded successfully!`
+                        : `${result.successfulUploads} of ${result.totalFiles} files uploaded successfully!`;
                     showSuccess(message);
 
                     // Reset forms
@@ -1485,7 +1701,7 @@
                     }
                     updateUploadCategoryDropdown();
                 } else {
-                    showError(result.Message || 'Upload failed');
+                    showError(result.message || 'Upload failed');
                 }
             } catch (error) {
                 console.error('Error uploading files:', error);

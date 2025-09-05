@@ -62,8 +62,19 @@ namespace PlexPrerollManager.Controllers
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats([FromQuery] string period = "daily", [FromQuery] int days = 30)
         {
-            var stats = await _usageService.GetUsageStatsAsync(period, days);
-            return Ok(stats);
+            try
+            {
+                // Initialize database if needed
+                await _usageService.InitializeDatabaseAsync();
+
+                var stats = await _usageService.GetUsageStatsAsync(period, days);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                // Return empty stats if database issues
+                return Ok(new UsageStats { Data = new List<dynamic>() });
+            }
         }
 
         /// <summary>
@@ -112,8 +123,19 @@ namespace PlexPrerollManager.Controllers
         [HttpGet("top")]
         public async Task<IActionResult> GetTopPrerolls([FromQuery] int limit = 10, [FromQuery] string period = "daily", [FromQuery] int days = 30)
         {
-            var topPrerolls = await _usageService.GetTopPrerollsAsync(limit, period, days);
-            return Ok(topPrerolls);
+            try
+            {
+                // Initialize database if needed
+                await _usageService.InitializeDatabaseAsync();
+
+                var topPrerolls = await _usageService.GetTopPrerollsAsync(limit, period, days);
+                return Ok(topPrerolls);
+            }
+            catch (Exception ex)
+            {
+                // Return empty list if database issues
+                return Ok(new List<TopPreroll>());
+            }
         }
 
         /// <summary>

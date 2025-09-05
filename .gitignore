@@ -123,3 +123,23 @@ RELEASE_NOTES.md
 
 # Documentation folder (local only, not tracked on GitHub)
 docs/
+
+# Release artifacts (generated, not tracked on GitHub)
+Release/
+packages/
+*.zip
+*.msi
+*.exe
+
+# Development and internal files (not for GitHub)
+AssemblyInfo.cs
+IntegrationExamples.cs
+USAGE_STATISTICS_BACKEND_README.md
+USAGE_STATISTICS_IMPLEMENTATION.md
+PROJECT_STATUS.md
+RELEASE_NOTES.md
+
+# User-specific files
+delete
+start
+stop

@@ -16,6 +16,10 @@
     <Product>PlexPrerollManager</Product>
     <Description>A comprehensive web-based management system for Plex cinema prerolls</Description>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Exclude unnecessary files from publish -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <!-- Disable default content items to avoid duplicates -->
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,6 +30,9 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.0" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,7 +42,47 @@
     <Content Include="scheduling-dashboard.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="oauth.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="build\**" />
+    <Compile Remove="Release\**" />
+    <EmbeddedResource Remove="build\**" />
+    <EmbeddedResource Remove="Release\**" />
+    <None Remove="build\**" />
+    <None Remove="Release\**" />
+  </ItemGroup>
+
+  <!-- Exclude unnecessary files from publish -->
+  <ItemGroup>
+    <Content Remove="publish\**" />
+    <Content Remove="publish-test\**" />
+    <Content Remove="Release\**" />
+    <Content Remove="bin\**" />
+    <Content Remove="obj\**" />
+    <Content Remove=".git\**" />
+    <Content Remove="*.user" />
+    <Content Remove="*.tmp" />
+    <Content Remove="*.log" />
+  </ItemGroup>
+
+  <!-- Exclude debug and build artifacts -->
+  <ItemGroup>
+    <None Remove="**\*.pdb" />
+    <None Remove="**\*.xml" />
+    <None Remove="**\*.config" />
+    <None Remove="**\*.staticwebassets.endpoints.json" />
+  </ItemGroup>
+
+  <!-- Only include necessary files -->
+  <ItemGroup>
+    <Content Include="dashboard.html" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="scheduling-dashboard.html" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="oauth.html" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="appsettings.json" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

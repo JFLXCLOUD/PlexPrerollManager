@@ -17,8 +17,19 @@ namespace PlexPrerollManager.Services
         public UsageTrackingService(IConfiguration configuration)
         {
             // Get the connection string from appsettings.json
-            _connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? "Data Source=plexprerollmanager.db";
+            var configuredConnectionString = configuration.GetConnectionString("DefaultConnection");
+
+            if (string.IsNullOrEmpty(configuredConnectionString))
+            {
+                // Default to a path in the application data directory
+                var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PlexPrerollManager");
+                Directory.CreateDirectory(appDataPath); // Ensure directory exists
+                _connectionString = $"Data Source={Path.Combine(appDataPath, "plexprerollmanager.db")}";
+            }
+            else
+            {
+                _connectionString = configuredConnectionString;
+            }
         }
 
         public async Task RecordPlayStartAsync(string prerollId, string categoryName,

@@ -57,7 +57,7 @@ Name: "service"; Description: "Install as Windows service (recommended)"; GroupD
 ; Application executable and dependencies (exclude unnecessary files)
 ; NOTE: Run build-installer.bat or build-installer-framework.bat first to create the publish directory
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; \
-  Excludes: "*.pdb,*.staticwebassets.endpoints.json,web.config,dashboard.html,scheduling-dashboard.html,appsettings.json"
+  Excludes: "*.pdb,*.xml,*.config,*.staticwebassets.endpoints.json,publish\*,publish-test\*,bin\*,obj\*,*.tmp,*.log,*.user"
 
 ; Web interface files (organized in web subdirectory)
 Source: "{#SourcePath}\..\dashboard.html"; DestDir: "{app}\web"; Flags: ignoreversion
