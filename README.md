@@ -18,7 +18,14 @@ A professional Windows application for managing Plex Media Server preroll videos
 
 ## 🚀 Quick Start
 
-### Installation (2 minutes)
+### One-Line Installation (Recommended)
+
+**With .NET Auto-Install:**
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1 | iex"
+```
+
+**Manual Installation (2 minutes):**
 
 1. Download the latest release from [GitHub Releases](https://github.com/JFLXCLOUD/PlexPrerollManager/releases)
 2. Extract the ZIP file to any folder
