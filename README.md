@@ -76,6 +76,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [.NET Community](https://dotnet.microsoft.com/) for the framework
 - All contributors and users
 
+## ☕ Support the Project
+
+If you find PlexPrerollManager helpful, consider supporting the development:
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-FF5E5B?style=flat&logo=kofi&logoColor=white)](https://ko-fi.com/j_b__)
+
+Your support helps maintain and improve the application!
+
 ## 📞 Support
 
 - 🐛 [GitHub Issues](https://github.com/JFLXCLOUD/PlexPrerollManager/issues)
