@@ -35,7 +35,7 @@ powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.c
 
 ### First Setup (5 minutes)
 
-1. **Authenticate with Plex.tv**: Click "Connect to Plex" and authorize the application
+1. **Configure Plex Token**: Enter your Plex token and server URL
 2. **Upload Prerolls**: Add video files and organize them into categories
 3. **Activate Category**: Choose which category should play before movies
 4. **Create Schedules** (optional): Set up automated category switching
