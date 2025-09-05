@@ -47,38 +47,9 @@ PlexPrerollManager/
 ├── Controllers/          # Web API endpoints
 ├── Models/              # Data models and DTOs
 ├── Services/            # Business logic and integrations
-├── dashboard.html       # Main web interface
+├── web/                 # Web interface files
 ├── install.ps1          # Professional installer
 └── PlexPrerollManager.csproj
-```
-
-## 🔧 Development
-
-### Prerequisites
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- Git
-
-### Building from Source
-
-```bash
-# Clone the repository
-git clone https://github.com/JFLXCLOUD/PlexPrerollManager.git
-cd PlexPrerollManager
-
-# Build the application
-dotnet build
-
-# Run for development
-dotnet run
-```
-
-### Creating Releases
-
-```bash
-# Prepare release package
-.\prepare-release.ps1
-
-# The release package will be created in packages/
 ```
 
 ## 📖 Documentation
@@ -107,7 +78,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 [GitHub Issues](https://github.com/JFLXCLOUD/PlexPrerollManager/issues)
+- 🐛 [GitHub Issues](https://github.com/JFLXCLOUD/PlexPrerollManager/issues)
 - 📖 [Documentation](INSTALLATION.md)
 - 🐛 [Bug Reports](https://github.com/JFLXCLOUD/PlexPrerollManager/issues/new?template=bug_report.md)
 

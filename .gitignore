@@ -143,3 +143,6 @@ RELEASE_NOTES.md
 delete
 start
 stop
+
+# Release preparation script (local development tool)
+prepare-release.ps1
