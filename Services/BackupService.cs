@@ -217,7 +217,7 @@ namespace Nexroll.Services
                 var dbPath = _configuration.GetConnectionString("DefaultConnection")?.Replace("Data Source=", "");
                 if (!string.IsNullOrEmpty(dbPath) && File.Exists(dbPath))
                 {
-                    var entry = archive.CreateEntry("database/plexprerollmanager.db");
+                    var entry = archive.CreateEntry("database/nexroll.db");
                     using var entryStream = entry.Open();
                     using var fileStream = File.OpenRead(dbPath);
                     await fileStream.CopyToAsync(entryStream);
@@ -311,7 +311,7 @@ namespace Nexroll.Services
 
         private async Task RestoreDatabaseAsync(string tempPath)
         {
-            var dbSource = Path.Combine(tempPath, "database", "plexprerollmanager.db");
+            var dbSource = Path.Combine(tempPath, "database", "nexroll.db");
             var dbTarget = _configuration.GetConnectionString("DefaultConnection")?.Replace("Data Source=", "");
             
             if (System.IO.File.Exists(dbSource) && !string.IsNullOrEmpty(dbTarget))

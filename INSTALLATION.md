@@ -62,7 +62,7 @@ After installation, the following directories are created:
 ├── 📁 Logs\                               (Application logs)
 ├── appsettings.json                       (Main configuration)
 ├── schedules.json                         (Scheduling data)
-└── plexprerollmanager.db                  (Usage statistics)
+└── nexroll.db                  (Usage statistics)
 ```
 
 ## 🔧 Service Management
