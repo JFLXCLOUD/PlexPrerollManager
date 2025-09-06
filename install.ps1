@@ -212,6 +212,23 @@ function Install-Application {
             }
         }
 
+        # BACKUP EXISTING CONFIGURATION FILES
+        $configBackup = @{}
+        $configFiles = @("appsettings.json")
+
+        Write-Host "Backing up existing configuration..." -ForegroundColor Gray
+        foreach ($configFile in $configFiles) {
+            $configPath = Join-Path $InstallPath $configFile
+            if (Test-Path $configPath) {
+                try {
+                    $configBackup[$configFile] = Get-Content -Path $configPath -Raw
+                    Write-Host "Backed up $configFile" -ForegroundColor Gray
+                } catch {
+                    Write-Host "Warning: Could not backup $configFile" -ForegroundColor Yellow
+                }
+            }
+        }
+
         if (-not (Test-Path $InstallPath)) {
             New-Item -ItemType Directory -Path $InstallPath -Force | Out-Null
         }
@@ -241,6 +258,20 @@ function Install-Application {
                         Write-Host "Warning: Could not copy $($file.Name) after $maxRetries attempts" -ForegroundColor Yellow
                         $success = $true  # Continue with other files
                     }
+                }
+            }
+        }
+
+        # RESTORE CONFIGURATION FILES
+        Write-Host "Restoring configuration files..." -ForegroundColor Gray
+        foreach ($configFile in $configFiles) {
+            if ($configBackup.ContainsKey($configFile)) {
+                $configPath = Join-Path $InstallPath $configFile
+                try {
+                    Set-Content -Path $configPath -Value $configBackup[$configFile] -Force
+                    Write-Host "Restored $configFile" -ForegroundColor Gray
+                } catch {
+                    Write-Host "Warning: Could not restore $configFile" -ForegroundColor Yellow
                 }
             }
         }
