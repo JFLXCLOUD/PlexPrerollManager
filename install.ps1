@@ -166,6 +166,30 @@ function Install-WindowsService {
         }
 
         if (Test-Path $servicePath) {
+            # Check if service already exists
+            $existingService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+            if ($existingService) {
+                Write-Host "Removing existing service..." -ForegroundColor Gray
+                # Stop the service if running
+                Stop-Service -Name $ServiceName -ErrorAction SilentlyContinue
+                # Delete the existing service
+                $deleteService = "sc.exe delete `"$ServiceName`""
+                cmd.exe /c $deleteService 2>$null
+
+                # Wait for service to be fully deleted
+                $maxWait = 10
+                $waitCount = 0
+                while ((Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) -and ($waitCount -lt $maxWait)) {
+                    Start-Sleep -Seconds 1
+                    $waitCount++
+                    Write-Host "Waiting for service deletion... ($waitCount/$maxWait)" -ForegroundColor Gray
+                }
+
+                if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
+                    Write-Host "Warning: Could not delete existing service. Trying to continue..." -ForegroundColor Yellow
+                }
+            }
+
             # Create Windows service
             $createService = "sc.exe create `"$ServiceName`" binPath= `"$servicePath`" start= auto"
             cmd.exe /c $createService 2>$null

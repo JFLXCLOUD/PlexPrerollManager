@@ -13,7 +13,8 @@
 
 param(
     [string]$OutputPath = ".\Release",
-    [string]$Version = "2.2.0"
+    [string]$Version = "2.2.0",
+    [switch]$Confirm
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,28 +41,59 @@ function Write-Success {
 
 function New-ReleaseDirectory {
     Write-Step "Creating release directory..."
-    
+
     if (Test-Path $OutputPath) {
-        Remove-Item -Path $OutputPath -Recurse -Force
+        try {
+            Remove-Item -Path $OutputPath -Recurse -Force
+        } catch {
+            Write-Host "[WARNING] Could not remove existing release directory: $($_.Exception.Message)" -ForegroundColor Yellow
+            Write-Host "[INFO] Please close any applications using files in the Release directory and try again." -ForegroundColor Yellow
+            throw "Release directory is locked by another process"
+        }
     }
-    
+
     New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
     Write-Success "Release directory created: $OutputPath"
 }
 
-function Copy-SourceFiles {
-    Write-Step "Copying source files..."
+function Publish-Application {
+    Write-Step "Publishing application..."
 
-    # Core application files - be selective
+    $publishPath = Join-Path $OutputPath "publish"
+    dotnet publish -c Release -o $publishPath --self-contained false
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to publish application"
+        exit 1
+    }
+
+    Write-Success "Application published to $publishPath"
+}
+
+function Copy-SourceFiles {
+    Write-Step "Copying published application..."
+
+    $publishPath = Join-Path $OutputPath "publish"
+
+    # Copy published files
+    Get-ChildItem -Path $publishPath | Copy-Item -Destination $OutputPath -Recurse -Force
+
+    # Clean up publish folder
+    Remove-Item $publishPath -Recurse -Force
+
+    # Copy additional files
     $includeFiles = @(
-        "Program.cs",
-        "PlexPrerollManager.csproj",
-        "appsettings.json",
         "README.md",
         "RELEASE_NOTES.md",
         "QUICK_START.md",
         "INSTALLATION.md"
     )
+
+    foreach ($file in $includeFiles) {
+        if (Test-Path $file) {
+            Copy-Item -Path $file -Destination $OutputPath -Force
+        }
+    }
 
     # Copy HTML files from web folder
     $htmlFiles = @("dashboard.html", "oauth.html", "scheduling-dashboard.html")
@@ -72,21 +104,7 @@ function Copy-SourceFiles {
         }
     }
 
-    foreach ($file in $includeFiles) {
-        if (Test-Path $file) {
-            Copy-Item -Path $file -Destination $OutputPath -Force
-        }
-    }
-
-    # Copy essential directories
-    $sourceDirs = @("Controllers", "Models", "Services")
-    foreach ($dir in $sourceDirs) {
-        if (Test-Path $dir) {
-            Copy-Item -Path $dir -Destination $OutputPath -Recurse -Force
-        }
-    }
-
-    Write-Success "Essential source files copied"
+    Write-Success "Published application and files copied"
 }
 
 function Copy-InstallationFiles {
@@ -192,7 +210,7 @@ FULLY FUNCTIONAL:
 
 ### Option 1: One-Click Installation (Recommended)
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1')"
 ```
 
 ### Option 2: Manual Installation
@@ -209,8 +227,6 @@ powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.c
 3. Activate Category: Choose which category should play before movies
 4. Create Schedules: Set up automated category switching (optional)
 5. Monitor Usage: View statistics and performance metrics
-
-Plex Preroll Manager v$Version is now production-ready with professional installation, reliable authentication, and comprehensive features for managing your Plex preroll videos!
 "@
 
     $releaseNotes | Out-File -FilePath (Join-Path $OutputPath "RELEASE_NOTES.md") -Encoding UTF8
@@ -354,16 +370,19 @@ try {
     Write-Host "  Output Path:  $OutputPath" -ForegroundColor White
     Write-Host ""
     
-    $confirm = Read-Host "Prepare release package? (Y/N)"
-    if ($confirm -notmatch "^[Yy]") {
-        Write-Host "Release preparation cancelled" -ForegroundColor Yellow
-        exit 0
+    if ($Confirm) {
+        $confirm = Read-Host "Prepare release package? (Y/N)"
+        if ($confirm -notmatch "^[Yy]") {
+            Write-Host "Release preparation cancelled" -ForegroundColor Yellow
+            exit 0
+        }
     }
     
     Write-Host ""
     
     # Preparation steps
     New-ReleaseDirectory
+    Publish-Application
     Copy-SourceFiles
     Copy-InstallationFiles
     New-ReleaseNotes
@@ -385,7 +404,7 @@ try {
     Write-Host ""
     
     Write-Host "Package Includes:" -ForegroundColor Cyan
-    Write-Host "   [OK] Complete source code" -ForegroundColor White
+    Write-Host "   [OK] Complete application executable" -ForegroundColor White
     Write-Host "   [OK] Professional installer (install.ps1)" -ForegroundColor White
     Write-Host "   [OK] Easy launcher (INSTALL.bat)" -ForegroundColor White
     Write-Host "   [OK] Comprehensive uninstaller" -ForegroundColor White
