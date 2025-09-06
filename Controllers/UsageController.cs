@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using PlexPrerollManager.Models;
-using PlexPrerollManager.Services;
+using Nexroll.Models;
+using Nexroll.Services;
 
-namespace PlexPrerollManager.Controllers
+namespace Nexroll.Controllers
 {
     [ApiController]
     [Route("api/usage")]

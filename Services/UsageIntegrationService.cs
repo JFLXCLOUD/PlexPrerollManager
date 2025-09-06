@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using PlexPrerollManager.Services;
+using Nexroll.Services;
 
-namespace PlexPrerollManager.Services
+namespace Nexroll.Services
 {
     public class UsageIntegrationService
     {

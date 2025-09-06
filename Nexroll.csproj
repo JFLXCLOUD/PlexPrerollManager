@@ -9,12 +9,12 @@
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishTrimmed>false</PublishTrimmed>
-    <AssemblyName>PlexPrerollManager</AssemblyName>
-    <RootNamespace>PlexPrerollManager</RootNamespace>
+    <AssemblyName>Nexroll</AssemblyName>
+    <RootNamespace>Nexroll</RootNamespace>
     <Version>2.2.0</Version>
-    <Authors>PlexPrerollManager</Authors>
-    <Product>PlexPrerollManager</Product>
-    <Description>A comprehensive web-based management system for Plex cinema prerolls</Description>
+    <Authors>Nexroll</Authors>
+    <Product>Nexroll</Product>
+    <Description>A comprehensive web-based management system for media preroll management</Description>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <!-- Exclude unnecessary files from publish -->
     <IncludeBuildOutput>false</IncludeBuildOutput>

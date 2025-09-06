@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PlexPrerollManager.Models
+namespace Nexroll.Models
 {
     public class Schedule
     {

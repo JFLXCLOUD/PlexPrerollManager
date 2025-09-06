@@ -1,4 +1,4 @@
-# PlexPrerollManager Installation Guide
+# Nexroll Installation Guide
 
 ## 🚀 Quick Installation
 
@@ -25,7 +25,7 @@
 ### Custom Installation Paths
 ```powershell
 # Custom install and data directories
-.\install.ps1 -InstallPath "C:\MyApps\PlexPrerollManager" -DataPath "D:\PlexData"
+.\install.ps1 -InstallPath "C:\MyApps\Nexroll" -DataPath "D:\PlexData"
 ```
 
 ### Clean Installation
@@ -45,14 +45,14 @@
 After installation, the following directories are created:
 
 ```
-📁 C:\Program Files\PlexPrerollManager\     (Installation)
-├── PlexPrerollManager.exe                  (Main executable)
+📁 C:\Program Files\Nexroll\     (Installation)
+├── Nexroll.exe                  (Main executable)
 ├── appsettings.json                        (Configuration)
 ├── dashboard.html                          (Web interface)
 ├── oauth.html                             (Authentication callback)
 └── [Runtime files...]
 
-📁 C:\ProgramData\PlexPrerollManager\       (Data)
+📁 C:\ProgramData\Nexroll\       (Data)
 ├── 📁 Prerolls\                           (Video categories)
 │   ├── 📁 General\
 │   ├── 📁 Halloween\
@@ -70,28 +70,28 @@ After installation, the following directories are created:
 ### Windows Service Commands
 ```powershell
 # Start service
-sc start PlexPrerollManager
+sc start Nexroll
 
 # Stop service
-sc stop PlexPrerollManager
+sc stop Nexroll
 
 # Check service status
-Get-Service PlexPrerollManager
+Get-Service Nexroll
 
 # View service configuration
-sc query PlexPrerollManager
+sc query Nexroll
 ```
 
 ### Manual Service Installation
 ```powershell
 # Create service manually
-sc create PlexPrerollManager binPath="C:\Program Files\PlexPrerollManager\PlexPrerollManager.exe" start=auto obj=LocalSystem DisplayName="Plex Preroll Manager"
+sc create Nexroll binPath="C:\Program Files\Nexroll\Nexroll.exe" start=auto obj=LocalSystem DisplayName="Nexroll"
 
 # Set service description
-sc description PlexPrerollManager "Manages Plex cinema prerolls with automated scheduling"
+sc description Nexroll "Manages Plex cinema prerolls with automated scheduling"
 
 # Configure service recovery
-sc failure PlexPrerollManager reset=86400 actions=restart/5000/restart/10000/restart/30000
+sc failure Nexroll reset=86400 actions=restart/5000/restart/10000/restart/30000
 ```
 
 ## 🌐 Network Access
@@ -107,7 +107,7 @@ sc failure PlexPrerollManager reset=86400 actions=restart/5000/restart/10000/res
 ### Firewall Configuration
 ```powershell
 # Manual firewall rule (if needed)
-New-NetFirewallRule -DisplayName "PlexPrerollManager HTTP" -Direction Inbound -Protocol TCP -LocalPort 8089 -Action Allow
+New-NetFirewallRule -DisplayName "Nexroll HTTP" -Direction Inbound -Protocol TCP -LocalPort 8089 -Action Allow
 ```
 
 ## 🔐 Security Considerations
@@ -130,20 +130,20 @@ New-NetFirewallRule -DisplayName "PlexPrerollManager HTTP" -Direction Inbound -P
 #### Service Won't Start
 ```powershell
 # Check service status
-Get-Service PlexPrerollManager
+Get-Service Nexroll
 
 # Check Windows Event Log
-Get-EventLog -LogName Application -Source PlexPrerollManager -Newest 10
+Get-EventLog -LogName Application -Source Nexroll -Newest 10
 
 # Manual start for debugging
-cd "C:\Program Files\PlexPrerollManager"
-.\PlexPrerollManager.exe
+cd "C:\Program Files\Nexroll"
+.\Nexroll.exe
 ```
 
 #### Web Interface Not Accessible
-1. **Check service status**: `Get-Service PlexPrerollManager`
+1. **Check service status**: `Get-Service Nexroll`
 2. **Check firewall**: Ensure port 8089 is allowed
-3. **Check logs**: Review application logs in `C:\ProgramData\PlexPrerollManager\Logs`
+3. **Check logs**: Review application logs in `C:\ProgramData\Nexroll\Logs`
 4. **Test locally**: Try http://localhost:8089
 
 #### .NET Runtime Issues
@@ -161,8 +161,8 @@ dotnet --version
 - **Firewall**: May require manual configuration in some environments
 
 ### Log Files
-- **Application Logs**: `C:\ProgramData\PlexPrerollManager\Logs\plexprerollmanager.log`
-- **Windows Event Log**: Application → PlexPrerollManager
+- **Application Logs**: `C:\ProgramData\Nexroll\Logs\nexroll.log`
+- **Windows Event Log**: Application → Nexroll
 - **Service Logs**: Use `Get-EventLog -LogName System -Source "Service Control Manager"`
 
 ## 🗑️ Uninstallation
@@ -188,26 +188,26 @@ dotnet --version
 ## 📞 Support
 
 ### Getting Help
-- **GitHub Issues**: [Report bugs and request features](https://github.com/JFLXCLOUD/PlexPrerollManager/issues)
+- **GitHub Issues**: [Report bugs and request features](https://github.com/JFLXCLOUD/Nexroll/issues)
 - **Documentation**: Check the README.md for usage instructions
 - **Logs**: Always include log files when reporting issues
 
 ### Manual Cleanup (if needed)
 ```powershell
 # Stop and remove service
-sc stop PlexPrerollManager
-sc delete PlexPrerollManager
+sc stop Nexroll
+sc delete Nexroll
 
 # Remove directories
-Remove-Item "C:\Program Files\PlexPrerollManager" -Recurse -Force
-Remove-Item "C:\ProgramData\PlexPrerollManager" -Recurse -Force
+Remove-Item "C:\Program Files\Nexroll" -Recurse -Force
+Remove-Item "C:\ProgramData\Nexroll" -Recurse -Force
 
 # Remove firewall rules
-Remove-NetFirewallRule -DisplayName "PlexPrerollManager*"
+Remove-NetFirewallRule -DisplayName "Nexroll*"
 
 # Remove shortcuts
-Remove-Item "$env:USERPROFILE\Desktop\PlexPrerollManager.lnk" -Force
-Remove-Item "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\PlexPrerollManager.lnk" -Force
+Remove-Item "$env:USERPROFILE\Desktop\Nexroll.lnk" -Force
+Remove-Item "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Nexroll.lnk" -Force
 ```
 
 ## 🔄 Upgrade Process
@@ -218,10 +218,10 @@ Remove-Item "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\PlexPrerollM
 3. **Service** automatically restarted with new version
 
 ### Manual Upgrade
-1. **Stop** service: `sc stop PlexPrerollManager`
-2. **Backup** data: Copy `C:\ProgramData\PlexPrerollManager`
-3. **Replace** files in `C:\Program Files\PlexPrerollManager`
-4. **Start** service: `sc start PlexPrerollManager`
+1. **Stop** service: `sc stop Nexroll`
+2. **Backup** data: Copy `C:\ProgramData\Nexroll`
+3. **Replace** files in `C:\Program Files\Nexroll`
+4. **Start** service: `sc start Nexroll`
 
 ---
 

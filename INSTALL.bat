@@ -1,15 +1,15 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: PlexPrerollManager Installation Launcher
+:: Nexroll Installation Launcher
 :: This batch file launches the PowerShell installer with proper execution policy
 
-title PlexPrerollManager Installer
+title Nexroll Installer
 
 echo.
 echo =================================================================
-echo                     PlexPrerollManager                        
-echo                    Installation Launcher                      
+echo                          Nexroll
+echo                    Installation Launcher
 echo =================================================================
 echo.
 

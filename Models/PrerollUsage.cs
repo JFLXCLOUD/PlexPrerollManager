@@ -1,6 +1,6 @@
 using System;
 
-namespace PlexPrerollManager.Models
+namespace Nexroll.Models
 {
     public class PrerollUsage
     {

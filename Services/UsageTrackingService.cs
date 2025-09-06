@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
-using PlexPrerollManager.Models;
+using Nexroll.Models;
 
-namespace PlexPrerollManager.Services
+namespace Nexroll.Services
 {
     public class UsageTrackingService
     {
@@ -22,9 +22,9 @@ namespace PlexPrerollManager.Services
             if (string.IsNullOrEmpty(configuredConnectionString))
             {
                 // Default to a path in the application data directory
-                var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PlexPrerollManager");
+                var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Nexroll");
                 Directory.CreateDirectory(appDataPath); // Ensure directory exists
-                _connectionString = $"Data Source={Path.Combine(appDataPath, "plexprerollmanager.db")}";
+                _connectionString = $"Data Source={Path.Combine(appDataPath, "nexroll.db")}";
             }
             else
             {

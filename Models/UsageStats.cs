@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace PlexPrerollManager.Models
+namespace Nexroll.Models
 {
     public class UsageStats
     {

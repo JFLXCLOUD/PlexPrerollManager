@@ -7,11 +7,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
-using PlexPrerollManager.Services;
-using PlexPrerollManager.Models;
+using Nexroll.Services;
+using Nexroll.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace PlexPrerollManager.Controllers
+namespace Nexroll.Controllers
 {
     public class CategoryDto
     {

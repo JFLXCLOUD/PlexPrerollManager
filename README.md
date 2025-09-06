@@ -1,6 +1,6 @@
 # Plex Preroll Manager
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/JFLXCLOUD/PlexPrerollManager/releases)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/JFLXCLOUD/Nexroll/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-9.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/9.0)
 
@@ -22,12 +22,12 @@ A professional Windows application for managing Plex Media Server preroll videos
 
 **With .NET Auto-Install:**
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/JFLXCLOUD/Nexroll/main/install.ps1 | iex"
 ```
 
 **Manual Installation (2 minutes):**
 
-1. Download the latest release from [GitHub Releases](https://github.com/JFLXCLOUD/PlexPrerollManager/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/JFLXCLOUD/Nexroll/releases)
 2. Extract the ZIP file to any folder
 3. Right-click `INSTALL.bat` and select "Run as administrator"
 4. Follow the installation prompts
@@ -50,13 +50,13 @@ powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.c
 ## 🏗️ Architecture
 
 ```
-PlexPrerollManager/
+Nexroll/
 ├── Controllers/          # Web API endpoints
 ├── Models/              # Data models and DTOs
 ├── Services/            # Business logic and integrations
 ├── web/                 # Web interface files
 ├── install.ps1          # Professional installer
-└── PlexPrerollManager.csproj
+└── Nexroll.csproj
 ```
 
 ## 📖 Documentation
@@ -85,7 +85,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ☕ Support the Project
 
-If you find PlexPrerollManager helpful, consider supporting the development:
+If you find Nexroll helpful, consider supporting the development:
 
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-FF5E5B?style=flat&logo=kofi&logoColor=white)](https://ko-fi.com/j_b__)
 
@@ -93,9 +93,9 @@ Your support helps maintain and improve the application!
 
 ## 📞 Support
 
-- 🐛 [GitHub Issues](https://github.com/JFLXCLOUD/PlexPrerollManager/issues)
+- 🐛 [GitHub Issues](https://github.com/JFLXCLOUD/Nexroll/issues)
 - 📖 [Documentation](INSTALLATION.md)
-- 🐛 [Bug Reports](https://github.com/JFLXCLOUD/PlexPrerollManager/issues/new?template=bug_report.md)
+- 🐛 [Bug Reports](https://github.com/JFLXCLOUD/Nexroll/issues/new?template=bug_report.md)
 
 ---
 

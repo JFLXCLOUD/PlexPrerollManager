@@ -21,10 +21,10 @@ $ErrorActionPreference = "Stop"
 # Configuration
 $AppName = "Plex Preroll Manager"
 $RepoOwner = "JFLXCLOUD"
-$RepoName = "PlexPrerollManager"
+$RepoName = "Nexroll"
 $Version = "2.2.0"
 $InstallPath = Join-Path $env:ProgramFiles $AppName
-$ServiceName = "PlexPrerollManager"
+$ServiceName = "Nexroll"
 
 function Write-Header {
     Clear-Host
@@ -128,7 +128,7 @@ function Install-Application {
         Invoke-WebRequest -Uri $DownloadUrl -OutFile $tempPath -UseBasicParsing
 
         Write-Step "Extracting files..."
-        $extractPath = "$env:TEMP\PlexPrerollManager_Extract"
+        $extractPath = "$env:TEMP\Nexroll_Extract"
         if (Test-Path $extractPath) {
             Remove-Item $extractPath -Recurse -Force
         }
@@ -162,10 +162,10 @@ function Install-Application {
             }
         }
 
-        # Kill any running PlexPrerollManager processes
-        $processes = Get-Process -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
+        # Kill any running Nexroll processes
+        $processes = Get-Process -Name "Nexroll" -ErrorAction SilentlyContinue
         if ($processes) {
-            Write-Host "Terminating running PlexPrerollManager processes..." -ForegroundColor Gray
+            Write-Host "Terminating running Nexroll processes..." -ForegroundColor Gray
             foreach ($process in $processes) {
                 try {
                     Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
@@ -291,11 +291,11 @@ function Install-WindowsService {
     Write-Step "Installing Windows service..."
 
     try {
-        $servicePath = Join-Path $InstallPath "PlexPrerollManager.exe"
+        $servicePath = Join-Path $InstallPath "Nexroll.exe"
 
         if (-not (Test-Path $servicePath)) {
             # Try with .dll extension (framework-dependent deployment)
-            $servicePath = Join-Path $InstallPath "PlexPrerollManager.dll"
+            $servicePath = Join-Path $InstallPath "Nexroll.dll"
         }
 
         if (Test-Path $servicePath) {
@@ -379,7 +379,7 @@ function Show-Completion {
     Write-Host "3. Configure your Plex server connection" -ForegroundColor White
     Write-Host "4. Upload preroll videos and create categories" -ForegroundColor White
     Write-Host ""
-    Write-Host "For help, visit: https://github.com/JFLXCLOUD/PlexPrerollManager" -ForegroundColor Gray
+    Write-Host "For help, visit: https://github.com/JFLXCLOUD/Nexroll" -ForegroundColor Gray
 }
 
 # Main installation process

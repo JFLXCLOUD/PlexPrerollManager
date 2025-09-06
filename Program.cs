@@ -6,10 +6,10 @@ using Microsoft.Extensions.Hosting.WindowsServices;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
-using PlexPrerollManager.Services;
+using Nexroll.Services;
 using System.Diagnostics;
 
-namespace PlexPrerollManager
+namespace Nexroll
 {
     public class Program
     {
@@ -18,7 +18,7 @@ namespace PlexPrerollManager
             try
             {
                 // Configure Serilog for file logging
-                var logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "PlexPrerollManager", "Logs");
+                var logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Nexroll", "Logs");
 
                 // Fallback to application directory if CommonApplicationData doesn't work
                 if (!Directory.Exists(Path.GetDirectoryName(logDirectory)))
@@ -29,7 +29,7 @@ namespace PlexPrerollManager
 
                 Directory.CreateDirectory(logDirectory); // Ensure directory exists
 
-                var logFilePath = Path.Combine(logDirectory, "plexprerollmanager-.log");
+                var logFilePath = Path.Combine(logDirectory, "nexroll-.log");
 
                 Log.Logger = new LoggerConfiguration()
                     .MinimumLevel.Debug()
@@ -61,7 +61,7 @@ namespace PlexPrerollManager
                 builder.Host.UseSerilog();
 
                 // Log application startup
-                Log.Information("=== PLEX PREROLL MANAGER STARTING ===");
+                Log.Information("=== NEXROLL STARTING ===");
                 Log.Information($"Application directory: {AppContext.BaseDirectory}");
                 Log.Information($"Current directory: {Directory.GetCurrentDirectory()}");
                 Log.Information($"Running as service: {!Environment.UserInteractive}");
@@ -271,9 +271,9 @@ namespace PlexPrerollManager
                     var fallbackDashboard = @"<!DOCTYPE html>
 <html lang='en'>
 <head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>PlexPrerollManager</title>
+   <meta charset='UTF-8'>
+   <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+   <title>Nexroll</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
         .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -285,7 +285,7 @@ namespace PlexPrerollManager
 </head>
 <body>
     <div class='container'>
-        <h1>🎬 PlexPrerollManager</h1>
+        <h1>🎬 Nexroll</h1>
         <div class='status'>
             <strong>✅ Service Status:</strong> Running successfully on port 8089
         </div>
@@ -326,8 +326,8 @@ namespace PlexPrerollManager
             catch (Exception ex)
             {
                 // Log the error and exit gracefully
-                Log.Fatal(ex, "Critical error starting PlexPrerollManager service");
-                Console.WriteLine($"Critical error starting PlexPrerollManager service: {ex.Message}");
+                Log.Fatal(ex, "Critical error starting Nexroll service");
+                Console.WriteLine($"Critical error starting Nexroll service: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
 
                 // Check if it's a port binding error
@@ -336,7 +336,7 @@ namespace PlexPrerollManager
                     Log.Error("Port 8089 is already in use. This usually means:");
                     Log.Error("1. The PlexPrerollManager service is already running");
                     Log.Error("2. Another application is using port 8089");
-                    Log.Error("3. Try stopping the service first: net stop PlexPrerollManager");
+                    Log.Error("3. Try stopping the service first: net stop Nexroll");
                     Console.WriteLine("Port 8089 is already in use. The service might already be running.");
                 }
 

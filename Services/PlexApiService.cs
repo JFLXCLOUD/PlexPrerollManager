@@ -3,7 +3,7 @@ using System.Text;
 using System.Xml;
 using Microsoft.Extensions.Configuration;
 
-namespace PlexPrerollManager.Services
+namespace Nexroll.Services
 {
     public class PlexApiService
     {

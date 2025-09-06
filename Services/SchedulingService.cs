@@ -1,8 +1,8 @@
-using PlexPrerollManager.Models;
+using Nexroll.Models;
 using Newtonsoft.Json;
 using System.IO;
 
-namespace PlexPrerollManager.Services
+namespace Nexroll.Services
 {
     public class SchedulingService
     {

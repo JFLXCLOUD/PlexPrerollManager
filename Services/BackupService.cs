@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.IO.Compression;
 
-namespace PlexPrerollManager.Services
+namespace Nexroll.Services
 {
     public class BackupService
     {

@@ -2,9 +2,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using PlexPrerollManager.Services;
+using Nexroll.Services;
 
-namespace PlexPrerollManager.Services
+namespace Nexroll.Services
 {
     public class DatabaseInitializationService : IHostedService
     {

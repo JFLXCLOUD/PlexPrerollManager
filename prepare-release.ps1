@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-    PlexPrerollManager Release Preparation Script
+    Nexroll Release Preparation Script
 .DESCRIPTION
     Prepares a clean, professional release package for distribution
 .PARAMETER OutputPath
@@ -14,7 +14,7 @@
 param(
     [string]$OutputPath = ".\Release",
     [string]$Version = "2.2.0",
-    [switch]$Confirm
+    [switch]$Confirm = $false
 )
 
 $ErrorActionPreference = "Stop"
@@ -22,7 +22,7 @@ $ErrorActionPreference = "Stop"
 function Write-Header {
     Clear-Host
     Write-Host "=================================================================" -ForegroundColor Cyan
-    Write-Host "                    PlexPrerollManager                        " -ForegroundColor Cyan
+    Write-Host "                          Nexroll                             " -ForegroundColor Cyan
     Write-Host "                   Release Preparation                        " -ForegroundColor Cyan
     Write-Host "                        Version $Version                           " -ForegroundColor Cyan
     Write-Host "=================================================================" -ForegroundColor Cyan
@@ -60,7 +60,7 @@ function Publish-Application {
     Write-Step "Publishing application..."
 
     $publishPath = Join-Path $OutputPath "publish"
-    dotnet publish -c Release -o $publishPath --self-contained false
+    dotnet publish Nexroll.csproj -c Release -o $publishPath --self-contained false
 
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to publish application"
@@ -210,7 +210,7 @@ FULLY FUNCTIONAL:
 
 ### Option 1: One-Click Installation (Recommended)
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/JFLXCLOUD/PlexPrerollManager/main/install.ps1')"
+powershell -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/JFLXCLOUD/Nexroll/main/install.ps1')"
 ```
 
 ### Option 2: Manual Installation
@@ -237,7 +237,7 @@ function New-QuickStartGuide {
     Write-Step "Creating quick start guide..."
     
     $quickStart = @"
-# PlexPrerollManager Quick Start Guide
+# Nexroll Quick Start Guide
 
 ## Installation (2 minutes)
 
@@ -250,7 +250,7 @@ function New-QuickStartGuide {
 
 ### Step 1: Authenticate with Plex.tv
 1. Click "Start Authentication" in the Plex.tv section
-2. Authorize PlexPrerollManager in the browser tab that opens
+2. Authorize Nexroll in the browser tab that opens
 3. Return to the dashboard - authentication will complete automatically
 
 ### Step 2: Upload Prerolls
@@ -283,7 +283,7 @@ Your Plex server will now use prerolls from the active category before movies.
 - Authentication failing? Try the authentication process again
 - Need help? Check INSTALLATION.md for detailed troubleshooting
 
-Support: https://github.com/JFLXCLOUD/PlexPrerollManager/issues
+Support: https://github.com/JFLXCLOUD/Nexroll/issues
 "@
 
     $quickStart | Out-File -FilePath (Join-Path $OutputPath "QUICK_START.md") -Encoding UTF8
@@ -301,7 +301,7 @@ function Remove-DevelopmentFiles {
         "corrected_*.html", "corrected_*.txt",
         "install-simple.bat", "build-installer*.bat",
         "installer.iss", "delete", "start", "stop",
-        "prepare-release.ps1", "PlexPrerollManager_v*.zip"
+        "prepare-release.ps1", "Nexroll_v*.zip"
     )
 
     foreach ($pattern in $excludePatterns) {
@@ -336,7 +336,7 @@ function New-ReleasePackage {
         New-Item -ItemType Directory -Path $packagesDir -Force | Out-Null
     }
 
-    $packageName = "PlexPrerollManager_v$Version"
+    $packageName = "Nexroll_v$Version"
     $packagePath = Join-Path $packagesDir "$packageName.zip"
 
     if (Test-Path $packagePath) {
