@@ -137,24 +137,78 @@ function Install-Application {
 
         Write-Step "Installing application..."
 
-        # Check if service is running and stop it before replacing files
-        $existingService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
-        if ($existingService -and $existingService.Status -eq "Running") {
-            Write-Host "Stopping existing service to allow file replacement..." -ForegroundColor Gray
-            Stop-Service -Name $ServiceName -ErrorAction SilentlyContinue
+        # Stop service and kill any running processes before replacing files
+        Write-Host "Stopping existing service and processes..." -ForegroundColor Gray
 
-            # Wait for service to stop
-            $maxWait = 30
-            $waitCount = 0
-            while (($existingService.Status -eq "Running") -and ($waitCount -lt $maxWait)) {
-                Start-Sleep -Seconds 1
-                $waitCount++
-                $existingService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
-                Write-Host "Waiting for service to stop... ($waitCount/$maxWait)" -ForegroundColor Gray
+        # Stop the service
+        $existingService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+        if ($existingService) {
+            if ($existingService.Status -eq "Running") {
+                Write-Host "Stopping service..." -ForegroundColor Gray
+                Stop-Service -Name $ServiceName -ErrorAction SilentlyContinue -Force
             }
 
-            if ($existingService -and $existingService.Status -eq "Running") {
-                Write-Host "Warning: Service did not stop gracefully. Attempting to continue..." -ForegroundColor Yellow
+            # Delete the service to ensure clean reinstall
+            Write-Host "Removing existing service..." -ForegroundColor Gray
+            $deleteService = "sc.exe delete `"$ServiceName`""
+            cmd.exe /c $deleteService 2>$null | Out-Null
+
+            # Wait for service to be deleted
+            $maxWait = 10
+            $waitCount = 0
+            while ((Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) -and ($waitCount -lt $maxWait)) {
+                Start-Sleep -Seconds 1
+                $waitCount++
+            }
+        }
+
+        # Kill any running PlexPrerollManager processes
+        $processes = Get-Process -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
+        if ($processes) {
+            Write-Host "Terminating running PlexPrerollManager processes..." -ForegroundColor Gray
+            foreach ($process in $processes) {
+                try {
+                    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                    Write-Host "Terminated process $($process.Id)" -ForegroundColor Gray
+                } catch {
+                    Write-Host "Could not terminate process $($process.Id): $($_.Exception.Message)" -ForegroundColor Yellow
+                }
+            }
+            Start-Sleep -Seconds 2  # Give processes time to fully terminate
+        }
+
+        # Additional cleanup - kill any processes using files in the install directory
+        if (Test-Path $InstallPath) {
+            $lockedFiles = Get-ChildItem -Path $InstallPath -File -Recurse -ErrorAction SilentlyContinue | Where-Object {
+                try {
+                    $fileStream = [System.IO.File]::Open($_.FullName, 'Open', 'Read', 'None')
+                    $fileStream.Close()
+                    $fileStream.Dispose()
+                    $false
+                } catch {
+                    $true
+                }
+            }
+
+            if ($lockedFiles) {
+                Write-Host "Found locked files, attempting to terminate locking processes..." -ForegroundColor Yellow
+                # This is a more aggressive approach - kill any process that might be locking our files
+                $handlePath = Join-Path $env:TEMP "handle.exe"
+                if (Test-Path $handlePath) {
+                    foreach ($file in $lockedFiles) {
+                        $output = & $handlePath $file.FullName 2>$null
+                        $processIds = $output | Select-String -Pattern "pid: (\d+)" | ForEach-Object { $_.Matches.Groups[1].Value } | Select-Object -Unique
+                        foreach ($processId in $processIds) {
+                            try {
+                                Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+                                Write-Host "Terminated locking process $processId" -ForegroundColor Gray
+                            } catch {
+                                Write-Host "Could not terminate process $processId" -ForegroundColor Yellow
+                            }
+                        }
+                    }
+                }
+                Start-Sleep -Seconds 3
             }
         }
 
