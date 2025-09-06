@@ -3,9 +3,9 @@
 
 <#
 .SYNOPSIS
-    PlexPrerollManager Professional Uninstaller
+    Nexroll Professional Uninstaller
 .DESCRIPTION
-    Completely removes PlexPrerollManager from the system
+    Completely removes Nexroll from the system
 .PARAMETER KeepData
     Keep user data and configuration files
 .PARAMETER Force
@@ -18,14 +18,14 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$ServiceName = "PlexPrerollManager"
-$InstallPath = "$env:ProgramFiles\PlexPrerollManager"
-$DataPath = "$env:ProgramData\PlexPrerollManager"
+$ServiceName = "Nexroll"
+$InstallPath = "$env:ProgramFiles\Nexroll"
+$DataPath = "$env:ProgramData\Nexroll"
 
 function Write-Header {
     Clear-Host
     Write-Host "=================================================================" -ForegroundColor Red
-    Write-Host "                    PlexPrerollManager                        " -ForegroundColor Red
+    Write-Host "                         Nexroll                             " -ForegroundColor Red
     Write-Host "                   Professional Uninstaller                   " -ForegroundColor Red
     Write-Host "=================================================================" -ForegroundColor Red
     Write-Host ""
@@ -73,7 +73,7 @@ function Remove-Processes {
     Write-Step "Stopping any running processes..."
     
     try {
-        $processes = Get-Process -Name "PlexPrerollManager" -ErrorAction SilentlyContinue
+        $processes = Get-Process -Name "Nexroll" -ErrorAction SilentlyContinue
         if ($processes) {
             $processes | Stop-Process -Force
             Write-Success "Stopped $($processes.Count) process(es)"
@@ -124,14 +124,14 @@ function Remove-Shortcuts {
     Write-Step "Removing shortcuts..."
     
     # Desktop shortcut
-    $desktopShortcut = "$env:USERPROFILE\Desktop\PlexPrerollManager.lnk"
+    $desktopShortcut = "$env:USERPROFILE\Desktop\Nexroll.lnk"
     if (Test-Path $desktopShortcut) {
         Remove-Item -Path $desktopShortcut -Force
         Write-Success "Desktop shortcut removed"
     }
-    
+
     # Start Menu shortcut
-    $startMenuShortcut = "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\PlexPrerollManager.lnk"
+    $startMenuShortcut = "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Nexroll.lnk"
     if (Test-Path $startMenuShortcut) {
         Remove-Item -Path $startMenuShortcut -Force
         Write-Success "Start Menu shortcut removed"
@@ -142,7 +142,7 @@ function Remove-FirewallRules {
     Write-Step "Removing firewall rules..."
     
     try {
-        Remove-NetFirewallRule -DisplayName "PlexPrerollManager*" -ErrorAction SilentlyContinue
+        Remove-NetFirewallRule -DisplayName "Nexroll*" -ErrorAction SilentlyContinue
         Write-Success "Firewall rules removed"
     } catch {
         Write-Warning "Could not remove firewall rules: $($_.Exception.Message)"
@@ -172,7 +172,7 @@ function Show-UninstallSummary {
     }
     Write-Host ""
     
-    Write-Host "Thank you for using PlexPrerollManager!" -ForegroundColor Cyan
+    Write-Host "Thank you for using Nexroll!" -ForegroundColor Cyan
 }
 
 # Main uninstallation process
@@ -187,11 +187,11 @@ try {
     
     if (-not $Force) {
         if ($KeepData) {
-            $confirm = Read-Host "Remove PlexPrerollManager but keep data files? (Y/N)"
+            $confirm = Read-Host "Remove Nexroll but keep data files? (Y/N)"
         } else {
-            $confirm = Read-Host "Completely remove PlexPrerollManager and all data? (Y/N)"
+            $confirm = Read-Host "Completely remove Nexroll and all data? (Y/N)"
         }
-        
+
         if ($confirm -notmatch "^[Yy]") {
             Write-Host "Uninstallation cancelled by user" -ForegroundColor Yellow
             exit 0
