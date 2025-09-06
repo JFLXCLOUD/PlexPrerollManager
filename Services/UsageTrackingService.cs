@@ -104,6 +104,50 @@ namespace PlexPrerollManager.Services
             return topPrerolls;
         }
 
+        public async Task<UsageStats> GetPrerollStatsAsync(string prerollId, string period = "daily", int days = 30)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+
+            var startDate = DateTime.UtcNow.AddDays(-days);
+
+            var stats = await connection.QueryAsync<dynamic>(@"
+                SELECT
+                    DATE(PlayStartTime) as Date,
+                    CategoryName,
+                    COUNT(*) as Plays,
+                    SUM(PlayDuration) as TotalWatchTime,
+                    COUNT(DISTINCT PrerollId) as UniquePrerolls
+                FROM PrerollUsage
+                WHERE PlayStartTime >= @StartDate AND PrerollId = @PrerollId
+                GROUP BY DATE(PlayStartTime), CategoryName
+                ORDER BY Date DESC, Plays DESC",
+                new { StartDate = startDate, PrerollId = prerollId });
+
+            return new UsageStats { Data = stats };
+        }
+
+        public async Task<UsageStats> GetCategoryStatsAsync(string categoryName, string period = "daily", int days = 30)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+
+            var startDate = DateTime.UtcNow.AddDays(-days);
+
+            var stats = await connection.QueryAsync<dynamic>(@"
+                SELECT
+                    DATE(PlayStartTime) as Date,
+                    CategoryName,
+                    COUNT(*) as Plays,
+                    SUM(PlayDuration) as TotalWatchTime,
+                    COUNT(DISTINCT PrerollId) as UniquePrerolls
+                FROM PrerollUsage
+                WHERE PlayStartTime >= @StartDate AND CategoryName = @CategoryName
+                GROUP BY DATE(PlayStartTime), CategoryName
+                ORDER BY Date DESC, Plays DESC",
+                new { StartDate = startDate, CategoryName = categoryName });
+
+            return new UsageStats { Data = stats };
+        }
+
         public async Task InitializeDatabaseAsync()
         {
             using var connection = new SqliteConnection(_connectionString);

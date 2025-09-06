@@ -83,19 +83,19 @@ namespace PlexPrerollManager.Controllers
         [HttpGet("stats/category/{categoryName}")]
         public async Task<IActionResult> GetCategoryStats(string categoryName, [FromQuery] string period = "daily", [FromQuery] int days = 30)
         {
-            var stats = await _usageService.GetUsageStatsAsync(period, days);
-
-            // Filter by category
-            var filteredData = new List<dynamic>();
-            foreach (var item in stats.Data)
+            try
             {
-                if (item.CategoryName == categoryName)
-                {
-                    filteredData.Add(item);
-                }
-            }
+                // Initialize database if needed
+                await _usageService.InitializeDatabaseAsync();
 
-            return Ok(new UsageStats { Data = filteredData });
+                var stats = await _usageService.GetCategoryStatsAsync(categoryName, period, days);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                // Return empty stats if database issues
+                return Ok(new UsageStats { Data = new List<dynamic>() });
+            }
         }
 
         /// <summary>
@@ -104,17 +104,19 @@ namespace PlexPrerollManager.Controllers
         [HttpGet("stats/preroll/{prerollId}")]
         public async Task<IActionResult> GetPrerollStats(string prerollId, [FromQuery] string period = "daily", [FromQuery] int days = 30)
         {
-            var stats = await _usageService.GetUsageStatsAsync(period, days);
-
-            // Filter by preroll (this would need to be enhanced based on your preroll data structure)
-            var filteredData = new List<dynamic>();
-            foreach (var item in stats.Data)
+            try
             {
-                // This is a simplified filter - you may need to adjust based on your data structure
-                filteredData.Add(item);
-            }
+                // Initialize database if needed
+                await _usageService.InitializeDatabaseAsync();
 
-            return Ok(new UsageStats { Data = filteredData });
+                var stats = await _usageService.GetPrerollStatsAsync(prerollId, period, days);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                // Return empty stats if database issues
+                return Ok(new UsageStats { Data = new List<dynamic>() });
+            }
         }
 
         /// <summary>
@@ -144,31 +146,52 @@ namespace PlexPrerollManager.Controllers
         [HttpGet("summary")]
         public async Task<IActionResult> GetSummary()
         {
-            var stats = await _usageService.GetUsageStatsAsync("daily", 30);
-
-            var totalPlays = 0;
-            var totalWatchTime = 0;
-            var uniquePrerolls = 0;
-            var categories = new HashSet<string>();
-
-            foreach (var item in stats.Data)
+            try
             {
-                totalPlays += (int)item.Plays;
-                totalWatchTime += (int)(item.TotalWatchTime ?? 0);
-                uniquePrerolls += (int)item.UniquePrerolls;
-                categories.Add((string)item.CategoryName);
+                // Initialize database if needed
+                await _usageService.InitializeDatabaseAsync();
+
+                var stats = await _usageService.GetUsageStatsAsync("daily", 30);
+
+                var totalPlays = 0;
+                var totalWatchTime = 0;
+                var uniquePrerolls = 0;
+                var categories = new HashSet<string>();
+
+                foreach (var item in stats.Data)
+                {
+                    totalPlays += Convert.ToInt32(item.Plays ?? 0);
+                    totalWatchTime += Convert.ToInt32(item.TotalWatchTime ?? 0);
+                    uniquePrerolls += Convert.ToInt32(item.UniquePrerolls ?? 0);
+                    if (item.CategoryName != null)
+                    {
+                        categories.Add(item.CategoryName.ToString());
+                    }
+                }
+
+                var summary = new
+                {
+                    TotalPlays = totalPlays,
+                    TotalWatchTime = totalWatchTime,
+                    UniquePrerolls = uniquePrerolls,
+                    TotalCategories = categories.Count,
+                    AverageDuration = totalPlays > 0 ? totalWatchTime / totalPlays : 0
+                };
+
+                return Ok(summary);
             }
-
-            var summary = new
+            catch (Exception ex)
             {
-                TotalPlays = totalPlays,
-                TotalWatchTime = totalWatchTime,
-                UniquePrerolls = uniquePrerolls,
-                TotalCategories = categories.Count,
-                AverageDuration = totalPlays > 0 ? totalWatchTime / totalPlays : 0
-            };
-
-            return Ok(summary);
+                // Return default summary if database issues
+                return Ok(new
+                {
+                    TotalPlays = 0,
+                    TotalWatchTime = 0,
+                    UniquePrerolls = 0,
+                    TotalCategories = 0,
+                    AverageDuration = 0
+                });
+            }
         }
     }
 }

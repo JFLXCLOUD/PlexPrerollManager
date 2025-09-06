@@ -1950,15 +1950,24 @@
 
         // Update statistics display
         function updateStatsDisplay() {
-            const totalPlays = statsData.reduce((sum, day) => sum + (day.Plays || 0), 0);
-            const totalWatchTime = statsData.reduce((sum, day) => sum + (day.TotalWatchTime || 0), 0);
-            const uniquePrerolls = new Set(statsData.flatMap(day => day.UniquePrerolls || [])).size;
-            const avgDuration = totalPlays > 0 ? Math.round(totalWatchTime / totalPlays) : 0;
+            try {
+                const totalPlays = statsData.reduce((sum, day) => sum + (parseInt(day.Plays) || 0), 0);
+                const totalWatchTime = statsData.reduce((sum, day) => sum + (parseInt(day.TotalWatchTime) || 0), 0);
+                const uniquePrerolls = statsData.reduce((sum, day) => sum + (parseInt(day.UniquePrerolls) || 0), 0);
+                const avgDuration = totalPlays > 0 ? Math.round(totalWatchTime / totalPlays) : 0;
 
-            document.getElementById('totalPlays').textContent = totalPlays.toLocaleString();
-            document.getElementById('totalWatchTime').textContent = formatDuration(totalWatchTime);
-            document.getElementById('uniquePrerolls').textContent = uniquePrerolls;
-            document.getElementById('avgDuration').textContent = formatDuration(avgDuration);
+                document.getElementById('totalPlays').textContent = totalPlays.toLocaleString();
+                document.getElementById('totalWatchTime').textContent = formatDuration(totalWatchTime);
+                document.getElementById('uniquePrerolls').textContent = uniquePrerolls;
+                document.getElementById('avgDuration').textContent = formatDuration(avgDuration);
+            } catch (error) {
+                console.error('Error updating stats display:', error);
+                // Set default values
+                document.getElementById('totalPlays').textContent = '0';
+                document.getElementById('totalWatchTime').textContent = '0s';
+                document.getElementById('uniquePrerolls').textContent = '0';
+                document.getElementById('avgDuration').textContent = '0s';
+            }
         }
 
         // Update charts (requires Chart.js)
@@ -1975,31 +1984,41 @@
                 window.playsChart.destroy();
             }
 
-            const labels = statsData.map(day => new Date(day.Date).toLocaleDateString());
-            const playsData = statsData.map(day => day.Plays || 0);
-
-            window.playsChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Plays',
-                        data: playsData,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
+            try {
+                const labels = statsData.map(day => {
+                    try {
+                        return new Date(day.Date).toLocaleDateString();
+                    } catch {
+                        return day.Date || 'Unknown';
                     }
-                }
-            });
+                });
+                const playsData = statsData.map(day => parseInt(day.Plays) || 0);
+
+                window.playsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Plays',
+                            data: playsData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error updating plays chart:', error);
+            }
         }
 
         function updateCategoriesChart() {
@@ -2010,38 +2029,42 @@
                 window.categoriesChart.destroy();
             }
 
-            // Aggregate by category
-            const categoryStats = {};
-            statsData.forEach(day => {
-                const category = day.CategoryName;
-                if (!categoryStats[category]) {
-                    categoryStats[category] = 0;
-                }
-                categoryStats[category] += day.Plays || 0;
-            });
-
-            const labels = Object.keys(categoryStats);
-            const data = Object.values(categoryStats);
-
-            window.categoriesChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-                            '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' }
+            try {
+                // Aggregate by category
+                const categoryStats = {};
+                statsData.forEach(day => {
+                    const category = day.CategoryName || 'Unknown';
+                    if (!categoryStats[category]) {
+                        categoryStats[category] = 0;
                     }
-                }
-            });
+                    categoryStats[category] += parseInt(day.Plays) || 0;
+                });
+
+                const labels = Object.keys(categoryStats);
+                const data = Object.values(categoryStats);
+
+                window.categoriesChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
+                                '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error updating categories chart:', error);
+            }
         }
 
         // Load top prerolls
