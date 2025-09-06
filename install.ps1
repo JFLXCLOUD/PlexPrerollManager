@@ -23,7 +23,7 @@ $AppName = "Plex Preroll Manager"
 $RepoOwner = "JFLXCLOUD"
 $RepoName = "PlexPrerollManager"
 $Version = "2.2.0"
-$InstallPath = "$env:ProgramFiles\$AppName"
+$InstallPath = Join-Path $env:ProgramFiles $AppName
 $ServiceName = "PlexPrerollManager"
 
 function Write-Header {
