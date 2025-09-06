@@ -123,7 +123,7 @@ function New-ReleaseNotes {
     Write-Step "Creating release notes..."
     
     $releaseNotes = @"
-# Plex Preroll Manager v$Version Release Notes
+# Nexroll v$Version Release Notes
 
 ## Major Fixes and Improvements
 
