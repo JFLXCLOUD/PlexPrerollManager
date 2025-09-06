@@ -2,9 +2,9 @@
 
 <#
 .SYNOPSIS
-    One-click installer for Plex Preroll Manager
+    One-click installer for Nexroll
 .DESCRIPTION
-    Downloads and installs Plex Preroll Manager with optional .NET runtime installation
+    Downloads and installs Nexroll with optional .NET runtime installation
 .PARAMETER SkipDotNet
     Skip .NET runtime check and installation
 .PARAMETER Force
@@ -19,7 +19,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$AppName = "Plex Preroll Manager"
+$AppName = "Nexroll"
 $RepoOwner = "JFLXCLOUD"
 $RepoName = "Nexroll"
 $Version = "2.2.0"
@@ -29,7 +29,7 @@ $ServiceName = "Nexroll"
 function Write-Header {
     Clear-Host
     Write-Host "=================================================================" -ForegroundColor Cyan
-    Write-Host "                Plex Preroll Manager Installer                 " -ForegroundColor Cyan
+    Write-Host "                      Nexroll Installer                        " -ForegroundColor Cyan
     Write-Host "=================================================================" -ForegroundColor Cyan
     Write-Host ""
 }
@@ -120,7 +120,7 @@ function Get-LatestRelease {
 function Install-Application {
     param([string]$DownloadUrl, [string]$FileName)
 
-    Write-Step "Downloading $AppName..."
+    Write-Step "Downloading Nexroll..."
 
     try {
         $tempPath = "$env:TEMP\$FileName"
@@ -328,7 +328,7 @@ function Install-WindowsService {
             cmd.exe /c $createService 2>$null
 
             # Set service description
-            $setDescription = "sc.exe description `"$ServiceName`" `"Plex Preroll Manager - Manages Plex cinema prerolls`""
+            $setDescription = "sc.exe description `"$ServiceName`" `"Nexroll - Manages Plex cinema prerolls`""
             cmd.exe /c $setDescription 2>$null
 
             Write-Success "Windows service installed"
@@ -368,7 +368,7 @@ function Show-Completion {
     Write-Host "                   Installation Complete!                      " -ForegroundColor Green
     Write-Host "=================================================================" -ForegroundColor Green
     Write-Host ""
-    Write-Host "Plex Preroll Manager has been installed successfully!" -ForegroundColor Green
+    Write-Host "Nexroll has been installed successfully!" -ForegroundColor Green
     Write-Host ""
     Write-Host "Access the web interface at: http://localhost:8089" -ForegroundColor Cyan
     Write-Host "Installation directory: $InstallPath" -ForegroundColor Cyan
