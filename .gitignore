@@ -146,3 +146,7 @@ stop
 
 # Release preparation script (local development tool)
 prepare-release.ps1
+
+# Solution file (local development, not tracked on GitHub)
+*.sln
+PlexPrerollManager.sln
