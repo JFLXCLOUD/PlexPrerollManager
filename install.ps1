@@ -136,12 +136,60 @@ function Install-Application {
         Expand-Archive -Path $tempPath -DestinationPath $extractPath -Force
 
         Write-Step "Installing application..."
+
+        # Check if service is running and stop it before replacing files
+        $existingService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+        if ($existingService -and $existingService.Status -eq "Running") {
+            Write-Host "Stopping existing service to allow file replacement..." -ForegroundColor Gray
+            Stop-Service -Name $ServiceName -ErrorAction SilentlyContinue
+
+            # Wait for service to stop
+            $maxWait = 30
+            $waitCount = 0
+            while (($existingService.Status -eq "Running") -and ($waitCount -lt $maxWait)) {
+                Start-Sleep -Seconds 1
+                $waitCount++
+                $existingService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+                Write-Host "Waiting for service to stop... ($waitCount/$maxWait)" -ForegroundColor Gray
+            }
+
+            if ($existingService -and $existingService.Status -eq "Running") {
+                Write-Host "Warning: Service did not stop gracefully. Attempting to continue..." -ForegroundColor Yellow
+            }
+        }
+
         if (-not (Test-Path $InstallPath)) {
             New-Item -ItemType Directory -Path $InstallPath -Force | Out-Null
         }
 
-        # Copy all files
-        Get-ChildItem -Path $extractPath | Copy-Item -Destination $InstallPath -Recurse -Force
+        # Copy all files with retry logic for locked files
+        $files = Get-ChildItem -Path $extractPath
+        foreach ($file in $files) {
+            $destinationPath = Join-Path $InstallPath $file.Name
+            $maxRetries = 3
+            $retryCount = 0
+            $success = $false
+
+            while (-not $success -and $retryCount -lt $maxRetries) {
+                try {
+                    if ($file.PSIsContainer) {
+                        Copy-Item -Path $file.FullName -Destination $destinationPath -Recurse -Force
+                    } else {
+                        Copy-Item -Path $file.FullName -Destination $destinationPath -Force
+                    }
+                    $success = $true
+                } catch {
+                    $retryCount++
+                    if ($retryCount -lt $maxRetries) {
+                        Write-Host "File $($file.Name) is locked, retrying in 2 seconds... ($retryCount/$maxRetries)" -ForegroundColor Yellow
+                        Start-Sleep -Seconds 2
+                    } else {
+                        Write-Host "Warning: Could not copy $($file.Name) after $maxRetries attempts" -ForegroundColor Yellow
+                        $success = $true  # Continue with other files
+                    }
+                }
+            }
+        }
 
         # Clean up
         Remove-Item $tempPath -Force
@@ -280,6 +328,16 @@ try {
     Write-Step "Checking for latest release..."
     $release = Get-LatestRelease
     Write-Success "Found release $($release.Version)"
+
+    # Check for existing installation
+    if ((Test-Path $InstallPath) -and -not $Force) {
+        Write-Host "Existing installation found at $InstallPath" -ForegroundColor Yellow
+        $reinstall = Read-Host "Reinstall? This will stop the service and replace all files. (Y/N)"
+        if ($reinstall -notmatch "^[Yy]") {
+            Write-Host "Installation cancelled" -ForegroundColor Yellow
+            exit 0
+        }
+    }
 
     # Install application
     Install-Application -DownloadUrl $release.DownloadUrl -FileName $release.FileName
